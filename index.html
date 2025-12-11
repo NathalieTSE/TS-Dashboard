@@ -105,13 +105,19 @@
     tr:hover td { background: rgba(255,255,255,0.02); }
     .section { margin-top: 18px; }
     .chart { height: 320px; }
-    .charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); gap: 14px; }
+    .charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 14px; max-width: 100%; overflow: hidden; }
+    .charts-grid .card { max-width: 100%; overflow: hidden; }
+    .charts-grid .chart { max-width: 100%; }
     .stacked { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
     footer { margin-top: 16px; color: var(--muted); font-size: 12px; }
-    @media (max-width: 1600px) { .charts-grid { grid-template-columns: 1fr; } }
+    @media (max-width: 1400px) { 
+      .charts-grid { grid-template-columns: 1fr; } 
+      .stacked { grid-template-columns: 1fr; }
+    }
     @media (max-width: 680px) { 
       main { padding: 14px; } 
       header { padding: 16px; }
+      .charts-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -165,7 +171,7 @@
           <div id="bugsChart" class="chart"></div>
         </div>
         <div class="card">
-          <h3>ZD tickets: opened vs solved</h3>
+          <h3>ZD tickets: solved vs opened</h3>
           <div id="ticketsChart" class="chart"></div>
         </div>
         <div class="card">
@@ -389,16 +395,6 @@
 
         Plotly.react('supportChart', [
           { 
-            name: 'Opened', 
-            x: ['Bugs','Support tickets','Client assoc.'], 
-            y: [r.bugsOpened, r.zdOpened, r.sfOpened], 
-            type: 'bar', 
-            marker:{color: colors.frySauce},
-            text: [r.bugsOpened, r.zdOpened, r.sfOpened],
-            textposition: 'top',
-            textfont: { color: 'black', size: 12 }
-          },
-          { 
             name: 'Solved', 
             x: ['Bugs','Support tickets','Client assoc.'], 
             y: [r.totalBugsSolved, r.totalZdSolved, r.totalSfSolved], 
@@ -407,6 +403,16 @@
             text: [r.totalBugsSolved, r.totalZdSolved, r.totalSfSolved],
             textposition: 'top',
             textfont: { color: 'white', size: 12 }
+          },
+          { 
+            name: 'Opened', 
+            x: ['Bugs','Support tickets','Client assoc.'], 
+            y: [r.bugsOpened, r.zdOpened, r.sfOpened], 
+            type: 'bar', 
+            marker:{color: colors.frySauce},
+            text: [r.bugsOpened, r.zdOpened, r.sfOpened],
+            textposition: 'top',
+            textfont: { color: 'black', size: 12 }
           },
         ], { barmode:'group', margin:{t:12,b:40,l:40,r:10}, paper_bgcolor:'rgba(0,0,0,0)', plot_bgcolor:'rgba(0,0,0,0)', font:{color:'#e2e8f0'}, yaxis:{gridcolor:'#1f2937'} }, {displayModeBar:false});
       }
@@ -425,8 +431,8 @@
       ], { barmode:'group', margin:{t:12,b:70,l:50,r:10}, legend:{orientation:'h',x:0,y:1.12}, paper_bgcolor:'rgba(0,0,0,0)', plot_bgcolor:'rgba(0,0,0,0)', font:{color:'#e2e8f0'}, yaxis:{title:'Bugs', gridcolor:'#1f2937'} }, {displayModeBar:false});
 
       Plotly.newPlot('ticketsChart', [
-        { name:'ZD Tickets Opened', x:names, y: recent.map(r => r.zdOpened), type:'bar', marker:{color: colors.gold} },
         { name:'ZD Tickets Solved', x:names, y: recent.map(r => r.totalZdSolved), type:'bar', marker:{color: colors.deepBlue} },
+        { name:'ZD Tickets Opened', x:names, y: recent.map(r => r.zdOpened), type:'bar', marker:{color: colors.gold} },
       ], { barmode:'group', margin:{t:12,b:70,l:50,r:10}, legend:{orientation:'h',x:0,y:1.12}, paper_bgcolor:'rgba(0,0,0,0)', plot_bgcolor:'rgba(0,0,0,0)', font:{color:'#e2e8f0'}, yaxis:{title:'ZD tickets', gridcolor:'#1f2937'} }, {displayModeBar:false});
 
       Plotly.newPlot('openedChart', [
