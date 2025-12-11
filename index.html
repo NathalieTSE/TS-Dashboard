@@ -47,7 +47,12 @@
     h1 { margin: 0 0 4px; font-size: 22px; }
     h2 { margin: 12px 0 8px; font-size: 16px; color: #e2e8f0; }
     p { margin: 0; color: var(--muted); }
-    main { padding: 16px 32px 32px; }
+    main { 
+      padding: 16px 32px 32px; 
+      max-width: 1600px;
+      margin: 0 auto;
+      width: 100%;
+    }
     .tabs { display: flex; gap: 8px; margin-top: 12px; }
     .tab {
       padding: 8px 14px;
@@ -130,7 +135,7 @@
         <span id="datePill" class="pill"></span>
       </div>
 
-      <div class="grid" id="kpiCards"></div>
+      <div id="kpiCards"></div>
 
       <div class="stacked section">
         <div class="card">
@@ -360,13 +365,49 @@
         `;
 
         Plotly.react('qualityChart', [
-          { name: 'Within SLA', x: ['P2','P3'], y: [r.p2Within, r.p3Within], type: 'bar', marker: { color: colors.trueBlue } },
-          { name: 'Over SLA', x: ['P2','P3'], y: [r.p2Over, r.p3Over], type: 'bar', marker: { color: colors.frySauce } }
+          { 
+            name: 'Within SLA', 
+            x: ['P2','P3'], 
+            y: [r.p2Within, r.p3Within], 
+            type: 'bar', 
+            marker: { color: colors.trueBlue },
+            text: [r.p2Within, r.p3Within],
+            textposition: 'top',
+            textfont: { color: 'white', size: 12 }
+          },
+          { 
+            name: 'Over SLA', 
+            x: ['P2','P3'], 
+            y: [r.p2Over, r.p3Over], 
+            type: 'bar', 
+            marker: { color: colors.frySauce },
+            text: [r.p2Over, r.p3Over],
+            textposition: 'top',
+            textfont: { color: 'black', size: 12 }
+          }
         ], { barmode:'group', margin: { t: 12, b: 40, l: 40, r: 10 }, legend:{orientation:'h',x:0,y:1.05}, paper_bgcolor:'rgba(0,0,0,0)', plot_bgcolor:'rgba(0,0,0,0)', font:{color:'#e2e8f0'}, yaxis:{gridcolor:'#1f2937'} }, {displayModeBar:false});
 
         Plotly.react('supportChart', [
-          { name: 'Opened', x: ['Bugs','Support tickets','Client assoc.'], y: [r.bugsOpened, r.zdOpened, r.sfOpened], type: 'bar', marker:{color: colors.frySauce} },
-          { name: 'Solved', x: ['Bugs','Support tickets','Client assoc.'], y: [r.totalBugsSolved, r.totalZdSolved, r.totalSfSolved], type: 'bar', marker:{color: colors.trueBlue} },
+          { 
+            name: 'Opened', 
+            x: ['Bugs','Support tickets','Client assoc.'], 
+            y: [r.bugsOpened, r.zdOpened, r.sfOpened], 
+            type: 'bar', 
+            marker:{color: colors.frySauce},
+            text: [r.bugsOpened, r.zdOpened, r.sfOpened],
+            textposition: 'top',
+            textfont: { color: 'black', size: 12 }
+          },
+          { 
+            name: 'Solved', 
+            x: ['Bugs','Support tickets','Client assoc.'], 
+            y: [r.totalBugsSolved, r.totalZdSolved, r.totalSfSolved], 
+            type: 'bar', 
+            marker:{color: colors.trueBlue},
+            text: [r.totalBugsSolved, r.totalZdSolved, r.totalSfSolved],
+            textposition: 'top',
+            textfont: { color: 'white', size: 12 }
+          },
         ], { barmode:'group', margin:{t:12,b:40,l:40,r:10}, paper_bgcolor:'rgba(0,0,0,0)', plot_bgcolor:'rgba(0,0,0,0)', font:{color:'#e2e8f0'}, yaxis:{gridcolor:'#1f2937'} }, {displayModeBar:false});
       }
 
