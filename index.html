@@ -534,16 +534,52 @@
 
         // Product Team pie chart (only if data exists)
         if (r.productTeam) {
-          const teamNames = Object.keys(r.productTeam);
-          const teamValues = Object.values(r.productTeam);
+          // Helper function to lighten a hex color
+          const lightenColor = (hex, percent) => {
+            const num = parseInt(hex.replace('#', ''), 16);
+            const r = Math.min(255, (num >> 16) + Math.round((255 - (num >> 16)) * percent));
+            const g = Math.min(255, ((num >> 8) & 0x00FF) + Math.round((255 - ((num >> 8) & 0x00FF)) * percent));
+            const b = Math.min(255, (num & 0x0000FF) + Math.round((255 - (num & 0x0000FF)) * percent));
+            return '#' + ((r << 16) | (g << 8) | b).toString(16).padStart(6, '0');
+          };
+          
+          // Convert teams to array and sort: "Other" at bottom if more than 10 teams
+          let teamEntries = Object.entries(r.productTeam);
+          const hasOther = teamEntries.some(([name]) => name.toLowerCase() === 'other');
+          const totalTeams = teamEntries.length;
+          
+          if (hasOther && totalTeams > 10) {
+            // Separate "Other" and sort the rest
+            const otherEntry = teamEntries.find(([name]) => name.toLowerCase() === 'other');
+            const otherEntries = teamEntries.filter(([name]) => name.toLowerCase() !== 'other');
+            // Sort by value descending (excluding Other)
+            otherEntries.sort((a, b) => b[1] - a[1]);
+            teamEntries = [...otherEntries, otherEntry];
+          } else {
+            // Sort by value descending
+            teamEntries.sort((a, b) => b[1] - a[1]);
+          }
+          
+          const teamNames = teamEntries.map(([name]) => name);
+          const teamValues = teamEntries.map(([, value]) => value);
           const totalIssues = teamValues.reduce((sum, val) => sum + val, 0);
           
-          // Use brand colors, cycling through them if there are more teams than colors
-          const brandColors = [colors.trueBlue, colors.deepBlue, colors.sky, colors.frySauce, colors.gold, '#8FCEEE', '#0026EE', '#FED141', '#FF7F64', '#0062E3'];
-          const teamColors = teamNames.map((_, i) => brandColors[i % brandColors.length]);
+          // Use brand colors, making them lighter on reuse
+          const baseBrandColors = [colors.trueBlue, colors.deepBlue, colors.sky, colors.frySauce, colors.gold, '#8FCEEE', '#0026EE', '#FED141', '#FF7F64', '#0062E3'];
+          const teamColors = teamNames.map((_, i) => {
+            const baseColorIndex = i % baseBrandColors.length;
+            const reuseCount = Math.floor(i / baseBrandColors.length);
+            const baseColor = baseBrandColors[baseColorIndex];
+            // Lighten by 30% for first reuse, 50% for second reuse, etc.
+            return reuseCount === 0 ? baseColor : lightenColor(baseColor, 0.3 + (reuseCount - 1) * 0.2);
+          });
+          
+          // Create text for slices (just numbers) and labels for legend (name + number)
+          const sliceText = teamValues.map(val => val.toString());
+          const legendLabels = teamNames.map((name, i) => `${name} (${teamValues[i]})`);
           
           Plotly.react('productTeamChart', [{
-            labels: teamNames,
+            labels: legendLabels,
             values: teamValues,
             type: 'pie',
             hole: 0.5,
@@ -551,7 +587,8 @@
               colors: teamColors,
               line: { color: '#0f1f2c', width: 2 }
             },
-            textinfo: 'percent',
+            text: sliceText,
+            textinfo: 'text',
             textposition: 'outside',
             textfont: { color: '#e2e8f0', size: 11 },
             hovertemplate: '<b>%{label}</b><br>Issues: %{value}<br>Percentage: %{percent}<extra></extra>'
