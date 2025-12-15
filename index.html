@@ -234,34 +234,14 @@
     // 5. Replace the URL below with your Google Sheets CSV export URL
     // Example: const csvUrl = 'https://docs.google.com/spreadsheets/d/1ABC123XYZ/gviz/tq?tqx=out:csv&sheet=Sheet1';
     
-    // For now, using local file. Uncomment the Google Sheets URL above and comment out the line below when ready.
-    //const csvUrl = encodeURI('Release Metrics - release (summarised).csv');
-    // Google Sheets URL - make sure sheet name is URL encoded if it has spaces or special characters
-    const sheetId = '1fqCBaaaWzL0nefyNgWVRrjDIWBnWDZKa3sJkPEaxV3k';
-    const sheetName = 'release (summarised)';
-    const googleSheetsUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(sheetName)}`;
-    // Use CORS proxy to bypass CORS restrictions (free public service)
-    const csvUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(googleSheetsUrl)}`;
+    // Using local CSV file. To switch to Google Sheets, see instructions above.
+    const csvUrl = encodeURI('Release Metrics - release (summarised).csv');
 
     async function loadCsv() {
-      try {
-        const res = await fetch(csvUrl);
-        if (!res.ok) throw new Error('Could not load CSV. Please check your Google Sheets URL and sharing settings.');
-        const data = await res.json();
-        // The CORS proxy returns JSON with the content in a 'contents' field
-        const text = data.contents || data;
-        return parseCsv(text);
-      } catch (err) {
-        // Fallback: try direct fetch (might work if CORS allows it)
-        try {
-          const directRes = await fetch(googleSheetsUrl);
-          if (!directRes.ok) throw err;
-          const text = await directRes.text();
-          return parseCsv(text);
-        } catch (fallbackErr) {
-          throw new Error('Could not load CSV from Google Sheets. Please ensure: 1) The sheet is shared publicly (View access), 2) The sheet name is correct, 3) You are accessing via HTTP (not file://). Original error: ' + err.message);
-        }
-      }
+      const res = await fetch(csvUrl);
+      if (!res.ok) throw new Error('Could not load CSV. If opening file://, start a local server (see notes below).');
+      const text = await res.text();
+      return parseCsv(text);
     }
 
     function parseCsvLine(line) {
