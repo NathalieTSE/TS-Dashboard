@@ -113,6 +113,8 @@
     th, td { padding: 10px 8px; border-bottom: 1px solid var(--border); font-size: 13px; }
     th { text-align: left; color: var(--muted); font-weight: 600; }
     tr:hover td { background: rgba(255,255,255,0.02); }
+    .table-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .table-wrapper table { min-width: 800px; }
     .section { margin-top: 18px; }
     .chart { height: 320px; }
     .charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 14px; max-width: 100%; overflow: hidden; }
@@ -156,11 +158,11 @@
 
       <div class="stacked section">
         <div class="card">
-          <h3>SLA adherence</h3>
+          <h3>SLA Adherence</h3>
           <div id="qualityChart" class="chart"></div>
         </div>
         <div class="card">
-          <h3>Support load vs delivery</h3>
+          <h3>Support Load vs Delivery</h3>
           <div id="supportChart" class="chart"></div>
         </div>
       </div>
@@ -175,23 +177,23 @@
       </div>
       <div class="charts-grid">
         <div class="card">
-          <h3>Bugs: solved vs opened</h3>
+          <h3>Bugs: Solved vs Opened</h3>
           <div id="bugsChart" class="chart"></div>
         </div>
         <div class="card">
-          <h3>ZD tickets: solved vs opened</h3>
+          <h3>ZD Tickets: Solved vs Opened</h3>
           <div id="ticketsChart" class="chart"></div>
         </div>
       </div>
       <div class="section">
         <div class="card">
-          <h3>Net new bugs per release</h3>
+          <h3>Net New Bugs Per Release</h3>
           <div id="openedChart" class="chart"></div>
         </div>
       </div>
 
       <div class="section card">
-        <h3>Comparison table</h3>
+        <h3>Comparison Table</h3>
         <div id="compareTable"></div>
       </div>
     </section>
@@ -218,7 +220,23 @@
 
     const fmt = (n) => Number.isFinite(n) ? n.toLocaleString() : '0';
 
-    const csvUrl = encodeURI('Release Metrics - release (summarised).csv');
+    // CSV Data Source Configuration
+    // Option 1: Use local CSV file (current setup)
+    // const csvUrl = encodeURI('Release Metrics - release (summarised).csv');
+    
+    // Option 2: Use Google Sheets (recommended for live updates)
+    // To set up Google Sheets:
+    // 1. Open your Google Sheet and make sure it's shared (View access is enough)
+    // 2. Get your Sheet ID from the URL: https://docs.google.com/spreadsheets/d/SHEET_ID_HERE/edit
+    // 3. Get your Sheet name (tab name at the bottom, e.g., "Sheet1")
+    // 4. Use this format: https://docs.google.com/spreadsheets/d/SHEET_ID/export?format=csv&gid=0
+    //    OR if you know the Sheet name: https://docs.google.com/spreadsheets/d/SHEET_ID/gviz/tq?tqx=out:csv&sheet=SHEET_NAME
+    // 5. Replace the URL below with your Google Sheets CSV export URL
+    // Example: const csvUrl = 'https://docs.google.com/spreadsheets/d/1ABC123XYZ/gviz/tq?tqx=out:csv&sheet=Sheet1';
+    
+    // For now, using local file. Uncomment the Google Sheets URL above and comment out the line below when ready.
+    //const csvUrl = encodeURI('Release Metrics - release (summarised).csv');
+    const csvUrl = 'https://docs.google.com/spreadsheets/d/1fqCBaaaWzL0nefyNgWVRrjDIWBnWDZKa3sJkPEaxV3k/gviz/tq?tqx=out:csv&sheet=release (summarised)';
 
     async function loadCsv() {
       const res = await fetch(csvUrl);
@@ -430,19 +448,21 @@
         detailTable.innerHTML = `
           <div class="detail-table-wrapper" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
             <div class="card">
-              <h3>Full metric breakdown</h3>
-              <table style="margin-top: 8px;">
-                <thead>
-                  <tr>
-                    <th>Area</th><th>Bugs solved</th><th>ZD tickets solved</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr><td>LXP</td><td>${fmt(r.lxpBugs)}</td><td>${fmt(r.lxpZd)}</td></tr>
-                  <tr><td>ACM</td><td>${fmt(r.acmBugs)}</td><td>${fmt(r.acmZd)}</td></tr>
-                  <tr><td><strong>Total</strong></td><td><strong>${fmt(r.totalBugsSolved)}</strong></td><td><strong>${fmt(r.totalZdSolved)}</strong></td></tr>
-                </tbody>
-              </table>
+              <h3>Full Metric Breakdown</h3>
+              <div class="table-wrapper">
+                <table style="margin-top: 8px;">
+                  <thead>
+                    <tr>
+                      <th>Area</th><th>Bugs Solved</th><th>ZD Tickets Solved</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr><td>LXP</td><td>${fmt(r.lxpBugs)}</td><td>${fmt(r.lxpZd)}</td></tr>
+                    <tr><td>ACM</td><td>${fmt(r.acmBugs)}</td><td>${fmt(r.acmZd)}</td></tr>
+                    <tr><td><strong>Total</strong></td><td><strong>${fmt(r.totalBugsSolved)}</strong></td><td><strong>${fmt(r.totalZdSolved)}</strong></td></tr>
+                  </tbody>
+                </table>
+              </div>
             </div>
             <div class="card">
               <h3>Trend Analysis</h3>
@@ -574,12 +594,13 @@
       compareTable.innerHTML = `
         <div style="margin-bottom: 12px; display: flex; gap: 16px; flex-wrap: wrap; align-items: center;">
           <span class="pill" style="background: rgba(0,98,227,0.15); border-color: rgba(0,98,227,0.45); color: #b4d2ff;">
-            <span style="font-weight: 600;">Best:</span> Lowest net new bugs (${fmt(minNet)})
+            <span style="font-weight: 600;">👍 Lowest:</span> Net new bugs (${fmt(minNet)})
           </span>
           <span class="pill" style="background: rgba(255,127,100,0.15); border-color: rgba(255,127,100,0.45); color: #ffd5cb;">
-            <span style="font-weight: 600;">Worst:</span> Highest net new bugs (${fmt(maxNet)})
+            <span style="font-weight: 600;">👎 Highest:</span> Net new bugs (${fmt(maxNet)})
           </span>
         </div>
+        <div class="table-wrapper">
         <table>
           <thead>
             <tr>
@@ -591,8 +612,8 @@
               const isBest = r.netNew === minNet;
               const isWorst = r.netNew === maxNet;
               const cls = isBest ? 'style="background: rgba(0,98,227,0.15); border-left: 3px solid #0062e3;"' : isWorst ? 'style="background: rgba(255,127,100,0.15); border-left: 3px solid #ff7f64;"' : '';
-              const badge = isBest ? '<span class="pill" style="background: rgba(0,98,227,0.25); border-color: rgba(0,98,227,0.6); color: #b4d2ff; font-size: 10px; padding: 2px 6px; margin-left: 6px;">BEST</span>' : 
-                           isWorst ? '<span class="pill" style="background: rgba(255,127,100,0.25); border-color: rgba(255,127,100,0.6); color: #ffd5cb; font-size: 10px; padding: 2px 6px; margin-left: 6px;">WORST</span>' : '';
+              const badge = isBest ? '<span class="pill" style="background: rgba(0,98,227,0.25); border-color: rgba(0,98,227,0.6); color: #b4d2ff; font-size: 14px; padding: 2px 6px; margin-left: 6px;">👍</span>' : 
+                           isWorst ? '<span class="pill" style="background: rgba(255,127,100,0.25); border-color: rgba(255,127,100,0.6); color: #ffd5cb; font-size: 14px; padding: 2px 6px; margin-left: 6px;">👎</span>' : '';
               return `
               <tr ${cls}>
                 <td><span style="display: inline-flex; align-items: center;">${r.release}${r.mpr ? ' • Major' : ''}${badge}</span></td>
@@ -610,6 +631,7 @@
             `;}).join('')}
           </tbody>
         </table>
+        </div>
       `;
 
       // Export buttons
