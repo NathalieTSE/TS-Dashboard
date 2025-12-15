@@ -534,13 +534,19 @@
 
         // Product Team pie chart (only if data exists)
         if (r.productTeam) {
-          // Helper function to lighten a hex color
+          // Helper function to lighten a hex color (percent is 0-1, where 1 = fully white)
           const lightenColor = (hex, percent) => {
-            const num = parseInt(hex.replace('#', ''), 16);
-            const r = Math.min(255, (num >> 16) + Math.round((255 - (num >> 16)) * percent));
-            const g = Math.min(255, ((num >> 8) & 0x00FF) + Math.round((255 - ((num >> 8) & 0x00FF)) * percent));
-            const b = Math.min(255, (num & 0x0000FF) + Math.round((255 - (num & 0x0000FF)) * percent));
-            return '#' + ((r << 16) | (g << 8) | b).toString(16).padStart(6, '0');
+            // Ensure hex has # prefix
+            const cleanHex = hex.startsWith('#') ? hex : '#' + hex;
+            const num = parseInt(cleanHex.replace('#', ''), 16);
+            const r = (num >> 16) & 0xFF;
+            const g = (num >> 8) & 0xFF;
+            const b = num & 0xFF;
+            // Blend with white
+            const newR = Math.round(r + (255 - r) * percent);
+            const newG = Math.round(g + (255 - g) * percent);
+            const newB = Math.round(b + (255 - b) * percent);
+            return '#' + ((newR << 16) | (newG << 8) | newB).toString(16).padStart(6, '0').toUpperCase();
           };
           
           // Convert teams to array and sort: "Other" at bottom if more than 10 teams
@@ -570,8 +576,16 @@
             const baseColorIndex = i % baseBrandColors.length;
             const reuseCount = Math.floor(i / baseBrandColors.length);
             const baseColor = baseBrandColors[baseColorIndex];
-            // Lighten by 30% for first reuse, 50% for second reuse, etc.
-            return reuseCount === 0 ? baseColor : lightenColor(baseColor, 0.3 + (reuseCount - 1) * 0.2);
+            // Lighten by 40% for first reuse, 60% for second reuse, 75% for third reuse
+            if (reuseCount === 0) {
+              return baseColor;
+            } else if (reuseCount === 1) {
+              return lightenColor(baseColor, 0.4);
+            } else if (reuseCount === 2) {
+              return lightenColor(baseColor, 0.6);
+            } else {
+              return lightenColor(baseColor, 0.75);
+            }
           });
           
           // Create text for slices (just numbers) and labels for legend (name + number)
