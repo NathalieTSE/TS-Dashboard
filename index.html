@@ -537,7 +537,7 @@
           // Helper function to lighten a hex color (percent is 0-1, where 1 = fully white)
           const lightenColor = (hex, percent) => {
             // Normalize hex color - ensure uppercase and # prefix
-            let cleanHex = hex.toString().trim().toUpperCase();
+            let cleanHex = String(hex).trim().toUpperCase();
             if (!cleanHex.startsWith('#')) {
               cleanHex = '#' + cleanHex;
             }
@@ -552,10 +552,10 @@
             const r = (num >> 16) & 0xFF;
             const g = (num >> 8) & 0xFF;
             const b = num & 0xFF;
-            // Blend with white
-            const newR = Math.round(r + (255 - r) * percent);
-            const newG = Math.round(g + (255 - g) * percent);
-            const newB = Math.round(b + (255 - b) * percent);
+            // Blend with white - ensure values don't exceed 255
+            const newR = Math.min(255, Math.round(r + (255 - r) * percent));
+            const newG = Math.min(255, Math.round(g + (255 - g) * percent));
+            const newB = Math.min(255, Math.round(b + (255 - b) * percent));
             const result = '#' + ((newR << 16) | (newG << 8) | newB).toString(16).padStart(6, '0').toUpperCase();
             return result;
           };
@@ -581,36 +581,37 @@
           const totalIssues = teamValues.reduce((sum, val) => sum + val, 0);
           
           // Use brand colors, making them lighter on reuse
-          // Track how many times each base color has been used
-          const baseBrandColors = [
-            colors.trueBlue.toUpperCase(), 
-            colors.deepBlue.toUpperCase(), 
-            colors.sky.toUpperCase(), 
-            colors.frySauce.toUpperCase(), 
-            colors.gold.toUpperCase(), 
-            '#8FCEEE', 
-            '#0026EE', 
-            '#FED141', 
-            '#FF7F64', 
-            '#0062E3'
+          // Define base colors and their lighter variants
+          const colorPalette = [
+            { base: colors.trueBlue.toUpperCase(), light1: '#4D9EFF', light2: '#80B8FF', light3: '#B3D2FF' },
+            { base: colors.deepBlue.toUpperCase(), light1: '#4D66FF', light2: '#8094FF', light3: '#B3C2FF' },
+            { base: colors.sky.toUpperCase(), light1: '#B3E0F7', light2: '#D1EDFB', light3: '#E8F6FD' },
+            { base: colors.frySauce.toUpperCase(), light1: '#FFA68A', light2: '#FFC2B0', light3: '#FFDED6' },
+            { base: colors.gold.toUpperCase(), light1: '#FFE070', light2: '#FFE99F', light3: '#FFF2CE' },
+            { base: '#8FCEEE', light1: '#B3E0F7', light2: '#D1EDFB', light3: '#E8F6FD' },
+            { base: '#0026EE', light1: '#4D66FF', light2: '#8094FF', light3: '#B3C2FF' },
+            { base: '#FED141', light1: '#FFE070', light2: '#FFE99F', light3: '#FFF2CE' },
+            { base: '#FF7F64', light1: '#FFA68A', light2: '#FFC2B0', light3: '#FFDED6' },
+            { base: '#0062E3', light1: '#4D9EFF', light2: '#80B8FF', light3: '#B3D2FF' }
           ];
-          const colorUsageCount = new Map(); // Track usage count per base color
+          const colorUsageMap = new Map(); // Track usage: key = baseColor string, value = count
           
           const teamColors = teamNames.map((_, i) => {
-            const baseColorIndex = i % baseBrandColors.length;
-            const baseColor = baseBrandColors[baseColorIndex];
-            const usageCount = colorUsageCount.get(baseColorIndex) || 0;
-            colorUsageCount.set(baseColorIndex, usageCount + 1);
+            const paletteIndex = i % colorPalette.length;
+            const palette = colorPalette[paletteIndex];
+            const baseColor = palette.base;
+            const usageCount = colorUsageMap.get(baseColor) || 0;
+            colorUsageMap.set(baseColor, usageCount + 1);
             
-            // Lighten by 50% for first reuse, 70% for second reuse, 85% for third reuse
+            // Return lighter variant based on usage count
             if (usageCount === 0) {
               return baseColor;
             } else if (usageCount === 1) {
-              return lightenColor(baseColor, 0.5);
+              return palette.light1;
             } else if (usageCount === 2) {
-              return lightenColor(baseColor, 0.7);
+              return palette.light2;
             } else {
-              return lightenColor(baseColor, 0.85);
+              return palette.light3;
             }
           });
           
@@ -643,7 +644,8 @@
               x: 1.05,
               y: 0.5,
               font: { color: '#e2e8f0', size: 11 },
-              traceorder: 'normal'
+              traceorder: 'normal',
+              itemorder: 'normal'
             },
             annotations: [{
               text: `<b>Total Issues</b><br>${totalIssues}`,
