@@ -445,10 +445,10 @@
           .join('\n\n'); // Add double line breaks between statements for better readability
         
         detailTable.innerHTML = `
-          <div class="detail-table-wrapper" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-            <div class="card">
+          <div class="detail-table-wrapper" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start;">
+            <div class="card" style="display: flex; flex-direction: column; height: 100%;">
               <h3>Full Metric Breakdown</h3>
-              <div class="table-wrapper">
+              <div class="table-wrapper" style="flex: 1;">
                 <table style="margin-top: 8px;">
                   <thead>
                     <tr>
@@ -463,9 +463,9 @@
                 </table>
               </div>
             </div>
-            <div class="card">
+            <div class="card" style="display: flex; flex-direction: column; height: 100%;">
               <h3>Trend Analysis</h3>
-              <div style="color: #e2e8f0; line-height: 1.8; font-size: 13px; white-space: pre-wrap; margin-top: 8px;">${formattedTrendText}</div>
+              <div style="color: #e2e8f0; line-height: 1.8; font-size: 13px; white-space: pre-wrap; margin-top: 8px; flex: 1;">${formattedTrendText}</div>
             </div>
           </div>
         `;
@@ -595,7 +595,8 @@
           <span class="pill" style="background: rgba(0,98,227,0.15); border-color: rgba(0,98,227,0.45); color: #b4d2ff;">
             <span style="font-weight: 600; display: inline-flex; align-items: center; gap: 4px;">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: inline-block; vertical-align: middle;">
-                <path d="M7 22V11M2 13V20C2 21.1 2.9 22 4 22H16.78C17.27 22 17.71 21.66 17.85 21.19L20.69 11.7C20.85 11.11 20.39 10.5 19.78 10.5H13C12.45 10.5 12 10.05 12 9.5V4C12 2.9 11.1 2 10 2H8C7.45 2 7 2.45 7 3V11" stroke="#0062e3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M7 22H4C2.9 22 2 21.1 2 20V13H7V22Z" fill="#0062e3"/>
+                <path d="M7 11V3C7 2.45 7.45 2 8 2H10C11.1 2 12 2.9 12 4V9.5C12 10.05 12.45 10.5 13 10.5H19.78C20.39 10.5 20.85 11.11 20.69 11.7L17.85 21.19C17.71 21.66 17.27 22 16.78 22H7V11Z" fill="#0062e3"/>
               </svg>
               Lowest:
             </span> Net new bugs (${fmt(minNet)})
@@ -603,7 +604,8 @@
           <span class="pill" style="background: rgba(255,127,100,0.15); border-color: rgba(255,127,100,0.45); color: #ffd5cb;">
             <span style="font-weight: 600; display: inline-flex; align-items: center; gap: 4px;">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: inline-block; vertical-align: middle;">
-                <path d="M17 2V13M22 11V4C22 2.9 21.1 2 20 2H7.22C6.73 2 6.29 2.34 6.15 2.81L3.31 12.3C3.15 12.89 3.61 13.5 4.22 13.5H11C11.55 13.5 12 13.95 12 14.5V20C12 21.1 12.9 22 14 22H16C16.55 22 17 21.55 17 21V13" stroke="#ff7f64" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M17 2H20C21.1 2 22 2.9 22 4V11H17V2Z" fill="#ff7f64"/>
+                <path d="M17 13V21C17 21.55 16.55 22 16 22H14C12.9 22 12 21.1 12 20V14.5C12 13.95 11.55 13.5 11 13.5H4.22C3.61 13.5 3.15 12.89 3.31 12.3L6.15 2.81C6.29 2.34 6.73 2 7.22 2H17V13Z" fill="#ff7f64"/>
               </svg>
               Highest:
             </span> Net new bugs (${fmt(maxNet)})
@@ -621,8 +623,8 @@
               const isBest = r.netNew === minNet;
               const isWorst = r.netNew === maxNet;
               const cls = isBest ? 'style="background: rgba(0,98,227,0.15); border-left: 3px solid #0062e3;"' : isWorst ? 'style="background: rgba(255,127,100,0.15); border-left: 3px solid #ff7f64;"' : '';
-              const badge = isBest ? '<span class="pill" style="background: rgba(0,98,227,0.25); border-color: rgba(0,98,227,0.6); padding: 2px 6px; margin-left: 6px; display: inline-flex; align-items: center;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7 22V11M2 13V20C2 21.1 2.9 22 4 22H16.78C17.27 22 17.71 21.66 17.85 21.19L20.69 11.7C20.85 11.11 20.39 10.5 19.78 10.5H13C12.45 10.5 12 10.05 12 9.5V4C12 2.9 11.1 2 10 2H8C7.45 2 7 2.45 7 3V11" stroke="#0062e3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>' : 
-                           isWorst ? '<span class="pill" style="background: rgba(255,127,100,0.25); border-color: rgba(255,127,100,0.6); padding: 2px 6px; margin-left: 6px; display: inline-flex; align-items: center;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M17 2V13M22 11V4C22 2.9 21.1 2 20 2H7.22C6.73 2 6.29 2.34 6.15 2.81L3.31 12.3C3.15 12.89 3.61 13.5 4.22 13.5H11C11.55 13.5 12 13.95 12 14.5V20C12 21.1 12.9 22 14 22H16C16.55 22 17 21.55 17 21V13" stroke="#ff7f64" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>' : '';
+              const badge = isBest ? '<span class="pill" style="background: rgba(0,98,227,0.25); border-color: rgba(0,98,227,0.6); padding: 2px 6px; margin-left: 6px; display: inline-flex; align-items: center;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7 22H4C2.9 22 2 21.1 2 20V13H7V22Z" fill="#0062e3"/><path d="M7 11V3C7 2.45 7.45 2 8 2H10C11.1 2 12 2.9 12 4V9.5C12 10.05 12.45 10.5 13 10.5H19.78C20.39 10.5 20.85 11.11 20.69 11.7L17.85 21.19C17.71 21.66 17.27 22 16.78 22H7V11Z" fill="#0062e3"/></svg></span>' : 
+                           isWorst ? '<span class="pill" style="background: rgba(255,127,100,0.25); border-color: rgba(255,127,100,0.6); padding: 2px 6px; margin-left: 6px; display: inline-flex; align-items: center;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M17 2H20C21.1 2 22 2.9 22 4V11H17V2Z" fill="#ff7f64"/><path d="M17 13V21C17 21.55 16.55 22 16 22H14C12.9 22 12 21.1 12 20V14.5C12 13.95 11.55 13.5 11 13.5H4.22C3.61 13.5 3.15 12.89 3.31 12.3L6.15 2.81C6.29 2.34 6.73 2 7.22 2H17V13Z" fill="#ff7f64"/></svg></span>' : '';
               return `
               <tr ${cls}>
                 <td><span style="display: inline-flex; align-items: center;">${r.release}${r.mpr ? ' • Major' : ''}${badge}</span></td>
