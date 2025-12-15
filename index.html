@@ -593,10 +593,20 @@
       compareTable.innerHTML = `
         <div style="margin-bottom: 12px; display: flex; gap: 16px; flex-wrap: wrap; align-items: center;">
           <span class="pill" style="background: rgba(0,98,227,0.15); border-color: rgba(0,98,227,0.45); color: #b4d2ff;">
-            <span style="font-weight: 600;">👍 Lowest:</span> Net new bugs (${fmt(minNet)})
+            <span style="font-weight: 600; display: inline-flex; align-items: center; gap: 4px;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: inline-block; vertical-align: middle;">
+                <path d="M7 22V11M2 13V20C2 21.1 2.9 22 4 22H16.78C17.27 22 17.71 21.66 17.85 21.19L20.69 11.7C20.85 11.11 20.39 10.5 19.78 10.5H13C12.45 10.5 12 10.05 12 9.5V4C12 2.9 11.1 2 10 2H8C7.45 2 7 2.45 7 3V11" stroke="#0062e3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              Lowest:
+            </span> Net new bugs (${fmt(minNet)})
           </span>
           <span class="pill" style="background: rgba(255,127,100,0.15); border-color: rgba(255,127,100,0.45); color: #ffd5cb;">
-            <span style="font-weight: 600;">👎 Highest:</span> Net new bugs (${fmt(maxNet)})
+            <span style="font-weight: 600; display: inline-flex; align-items: center; gap: 4px;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: inline-block; vertical-align: middle;">
+                <path d="M17 2V13M22 11V4C22 2.9 21.1 2 20 2H7.22C6.73 2 6.29 2.34 6.15 2.81L3.31 12.3C3.15 12.89 3.61 13.5 4.22 13.5H11C11.55 13.5 12 13.95 12 14.5V20C12 21.1 12.9 22 14 22H16C16.55 22 17 21.55 17 21V13" stroke="#ff7f64" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              Highest:
+            </span> Net new bugs (${fmt(maxNet)})
           </span>
         </div>
         <div class="table-wrapper">
@@ -611,8 +621,8 @@
               const isBest = r.netNew === minNet;
               const isWorst = r.netNew === maxNet;
               const cls = isBest ? 'style="background: rgba(0,98,227,0.15); border-left: 3px solid #0062e3;"' : isWorst ? 'style="background: rgba(255,127,100,0.15); border-left: 3px solid #ff7f64;"' : '';
-              const badge = isBest ? '<span class="pill" style="background: rgba(0,98,227,0.25); border-color: rgba(0,98,227,0.6); color: #b4d2ff; font-size: 14px; padding: 2px 6px; margin-left: 6px;">👍</span>' : 
-                           isWorst ? '<span class="pill" style="background: rgba(255,127,100,0.25); border-color: rgba(255,127,100,0.6); color: #ffd5cb; font-size: 14px; padding: 2px 6px; margin-left: 6px;">👎</span>' : '';
+              const badge = isBest ? '<span class="pill" style="background: rgba(0,98,227,0.25); border-color: rgba(0,98,227,0.6); padding: 2px 6px; margin-left: 6px; display: inline-flex; align-items: center;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7 22V11M2 13V20C2 21.1 2.9 22 4 22H16.78C17.27 22 17.71 21.66 17.85 21.19L20.69 11.7C20.85 11.11 20.39 10.5 19.78 10.5H13C12.45 10.5 12 10.05 12 9.5V4C12 2.9 11.1 2 10 2H8C7.45 2 7 2.45 7 3V11" stroke="#0062e3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>' : 
+                           isWorst ? '<span class="pill" style="background: rgba(255,127,100,0.25); border-color: rgba(255,127,100,0.6); padding: 2px 6px; margin-left: 6px; display: inline-flex; align-items: center;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M17 2V13M22 11V4C22 2.9 21.1 2 20 2H7.22C6.73 2 6.29 2.34 6.15 2.81L3.31 12.3C3.15 12.89 3.61 13.5 4.22 13.5H11C11.55 13.5 12 13.95 12 14.5V20C12 21.1 12.9 22 14 22H16C16.55 22 17 21.55 17 21V13" stroke="#ff7f64" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>' : '';
               return `
               <tr ${cls}>
                 <td><span style="display: inline-flex; align-items: center;">${r.release}${r.mpr ? ' • Major' : ''}${badge}</span></td>
