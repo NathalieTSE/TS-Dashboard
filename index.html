@@ -536,9 +536,19 @@
         if (r.productTeam) {
           // Helper function to lighten a hex color (percent is 0-1, where 1 = fully white)
           const lightenColor = (hex, percent) => {
-            // Ensure hex has # prefix
-            const cleanHex = hex.startsWith('#') ? hex : '#' + hex;
-            const num = parseInt(cleanHex.replace('#', ''), 16);
+            // Normalize hex color - ensure uppercase and # prefix
+            let cleanHex = hex.toString().trim().toUpperCase();
+            if (!cleanHex.startsWith('#')) {
+              cleanHex = '#' + cleanHex;
+            }
+            const hexValue = cleanHex.replace('#', '');
+            if (hexValue.length !== 6) {
+              return hex; // Return original if invalid
+            }
+            const num = parseInt(hexValue, 16);
+            if (isNaN(num)) {
+              return hex; // Return original if invalid
+            }
             const r = (num >> 16) & 0xFF;
             const g = (num >> 8) & 0xFF;
             const b = num & 0xFF;
@@ -546,15 +556,15 @@
             const newR = Math.round(r + (255 - r) * percent);
             const newG = Math.round(g + (255 - g) * percent);
             const newB = Math.round(b + (255 - b) * percent);
-            return '#' + ((newR << 16) | (newG << 8) | newB).toString(16).padStart(6, '0').toUpperCase();
+            const result = '#' + ((newR << 16) | (newG << 8) | newB).toString(16).padStart(6, '0').toUpperCase();
+            return result;
           };
           
-          // Convert teams to array and sort: "Other" at bottom if more than 10 teams
+          // Convert teams to array and sort: "Other" ALWAYS at bottom
           let teamEntries = Object.entries(r.productTeam);
           const hasOther = teamEntries.some(([name]) => name.toLowerCase() === 'other');
-          const totalTeams = teamEntries.length;
           
-          if (hasOther && totalTeams > 10) {
+          if (hasOther) {
             // Separate "Other" and sort the rest
             const otherEntry = teamEntries.find(([name]) => name.toLowerCase() === 'other');
             const otherEntries = teamEntries.filter(([name]) => name.toLowerCase() !== 'other');
@@ -571,20 +581,36 @@
           const totalIssues = teamValues.reduce((sum, val) => sum + val, 0);
           
           // Use brand colors, making them lighter on reuse
-          const baseBrandColors = [colors.trueBlue, colors.deepBlue, colors.sky, colors.frySauce, colors.gold, '#8FCEEE', '#0026EE', '#FED141', '#FF7F64', '#0062E3'];
+          // Track how many times each base color has been used
+          const baseBrandColors = [
+            colors.trueBlue.toUpperCase(), 
+            colors.deepBlue.toUpperCase(), 
+            colors.sky.toUpperCase(), 
+            colors.frySauce.toUpperCase(), 
+            colors.gold.toUpperCase(), 
+            '#8FCEEE', 
+            '#0026EE', 
+            '#FED141', 
+            '#FF7F64', 
+            '#0062E3'
+          ];
+          const colorUsageCount = new Map(); // Track usage count per base color
+          
           const teamColors = teamNames.map((_, i) => {
             const baseColorIndex = i % baseBrandColors.length;
-            const reuseCount = Math.floor(i / baseBrandColors.length);
             const baseColor = baseBrandColors[baseColorIndex];
-            // Lighten by 40% for first reuse, 60% for second reuse, 75% for third reuse
-            if (reuseCount === 0) {
+            const usageCount = colorUsageCount.get(baseColorIndex) || 0;
+            colorUsageCount.set(baseColorIndex, usageCount + 1);
+            
+            // Lighten by 50% for first reuse, 70% for second reuse, 85% for third reuse
+            if (usageCount === 0) {
               return baseColor;
-            } else if (reuseCount === 1) {
-              return lightenColor(baseColor, 0.4);
-            } else if (reuseCount === 2) {
-              return lightenColor(baseColor, 0.6);
+            } else if (usageCount === 1) {
+              return lightenColor(baseColor, 0.5);
+            } else if (usageCount === 2) {
+              return lightenColor(baseColor, 0.7);
             } else {
-              return lightenColor(baseColor, 0.75);
+              return lightenColor(baseColor, 0.85);
             }
           });
           
