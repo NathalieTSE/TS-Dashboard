@@ -365,6 +365,18 @@
           p3Within: toInt('p3 within sla'),
           p3Over: toInt('p3 over sla'),
           trendSummary: get('trend summary').replace(/^"|"$/g, '').trim(),
+          productTeam: (() => {
+            const teamData = get('product team').replace(/^"|"$/g, '').trim();
+            if (!teamData) return null;
+            const teams = {};
+            teamData.split(',').forEach(item => {
+              const [name, count] = item.split(':').map(s => s.trim());
+              if (name && count) {
+                teams[name] = parseInt(count, 10) || 0;
+              }
+            });
+            return Object.keys(teams).length > 0 ? teams : null;
+          })(),
         };
       }).filter(Boolean).sort((a, b) => new Date(a.date) - new Date(b.date));
     }
@@ -448,20 +460,24 @@
           <div class="detail-table-wrapper" style="display: grid; grid-template-columns: calc(50% - 10px) calc(50% - 10px); gap: 20px; align-items: stretch; width: 100%;">
             <div class="card" style="display: flex; flex-direction: column; width: 100%; min-width: 0;">
               <h3 style="margin-top: 0;">Full Metric Breakdown</h3>
-              <div class="table-wrapper" style="flex: 1;">
-                <table style="margin-top: 8px; width: 100%;">
-                  <thead>
-                    <tr>
-                      <th>Area</th><th>Bugs Solved</th><th>ZD Tickets Solved</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr><td>LXP</td><td>${fmt(r.lxpBugs)}</td><td>${fmt(r.lxpZd)}</td></tr>
-                    <tr><td>ACM</td><td>${fmt(r.acmBugs)}</td><td>${fmt(r.acmZd)}</td></tr>
-                    <tr><td><strong>Total</strong></td><td><strong>${fmt(r.totalBugsSolved)}</strong></td><td><strong>${fmt(r.totalZdSolved)}</strong></td></tr>
-                  </tbody>
-                </table>
-              </div>
+              <table style="margin-top: 8px; width: 100%;">
+                <thead>
+                  <tr>
+                    <th>Area</th><th>Bugs Solved</th><th>ZD Tickets Solved</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr><td>LXP</td><td>${fmt(r.lxpBugs)}</td><td>${fmt(r.lxpZd)}</td></tr>
+                  <tr><td>ACM</td><td>${fmt(r.acmBugs)}</td><td>${fmt(r.acmZd)}</td></tr>
+                  <tr><td><strong>Total</strong></td><td><strong>${fmt(r.totalBugsSolved)}</strong></td><td><strong>${fmt(r.totalZdSolved)}</strong></td></tr>
+                </tbody>
+              </table>
+              ${r.productTeam ? `
+                <div style="margin-top: 16px;">
+                  <h3 style="margin-top: 12px; margin-bottom: 8px;">Product Team Breakdown</h3>
+                  <div id="productTeamChart" class="chart" style="height: 300px;"></div>
+                </div>
+              ` : ''}
             </div>
             <div class="card" style="display: flex; flex-direction: column; width: 100%; min-width: 0;">
               <h3 style="margin-top: 0;">Trend Analysis</h3>
@@ -515,6 +531,52 @@
             textfont: { color: 'black', size: 12 }
           },
         ], { barmode:'group', margin:{t:12,b:40,l:40,r:10}, paper_bgcolor:'rgba(0,0,0,0)', plot_bgcolor:'rgba(0,0,0,0)', font:{color:'#e2e8f0'}, yaxis:{gridcolor:'#1f2937'} }, {displayModeBar:false});
+
+        // Product Team pie chart (only if data exists)
+        if (r.productTeam) {
+          const teamNames = Object.keys(r.productTeam);
+          const teamValues = Object.values(r.productTeam);
+          const totalIssues = teamValues.reduce((sum, val) => sum + val, 0);
+          
+          // Use brand colors, cycling through them if there are more teams than colors
+          const brandColors = [colors.trueBlue, colors.deepBlue, colors.sky, colors.frySauce, colors.gold, '#8FCEEE', '#0026EE', '#FED141', '#FF7F64', '#0062E3'];
+          const teamColors = teamNames.map((_, i) => brandColors[i % brandColors.length]);
+          
+          Plotly.react('productTeamChart', [{
+            labels: teamNames,
+            values: teamValues,
+            type: 'pie',
+            hole: 0.5,
+            marker: {
+              colors: teamColors,
+              line: { color: '#0f1f2c', width: 2 }
+            },
+            textinfo: 'percent',
+            textposition: 'outside',
+            textfont: { color: '#e2e8f0', size: 11 },
+            hovertemplate: '<b>%{label}</b><br>Issues: %{value}<br>Percentage: %{percent}<extra></extra>'
+          }], {
+            margin: { t: 40, b: 20, l: 20, r: 20 },
+            paper_bgcolor: 'rgba(0,0,0,0)',
+            plot_bgcolor: 'rgba(0,0,0,0)',
+            font: { color: '#e2e8f0' },
+            showlegend: true,
+            legend: {
+              orientation: 'v',
+              x: 1.05,
+              y: 0.5,
+              font: { color: '#e2e8f0', size: 11 },
+              traceorder: 'normal'
+            },
+            annotations: [{
+              text: `<b>Total Issues</b><br>${totalIssues}`,
+              x: 0.5,
+              y: 0.5,
+              font: { size: 14, color: '#e2e8f0' },
+              showarrow: false
+            }]
+          }, {displayModeBar:false});
+        }
       }
 
       select.addEventListener('change', e => renderRelease(e.target.value));
