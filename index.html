@@ -117,6 +117,12 @@
     .table-wrapper table { min-width: 800px; }
     .section { margin-top: 18px; }
     .chart { height: 320px; }
+    /* Hide connector lines in pie chart - these are thin lines connecting text to slices */
+    #productTeamChart .js-plotly-plot svg g[class*="pie"] path[stroke-width="1"],
+    #productTeamChart .js-plotly-plot svg g[class*="pie"] path[stroke-width="2"] {
+      stroke: none !important;
+      display: none !important;
+    }
     .charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 14px; max-width: 100%; overflow: hidden; }
     .charts-grid .card { max-width: 100%; overflow: hidden; }
     .charts-grid .chart { max-width: 100%; }
@@ -619,15 +625,11 @@
           const sliceText = teamValues.map(val => val.toString());
           const legendLabels = teamNames.map((name, i) => `${name} (${teamValues[i]})`);
           
-          // Create textposition array: use 'inside' for small values to avoid connector lines
-          const textPositions = teamValues.map(val => val <= 3 ? 'inside' : 'outside');
-          
           // Ensure data is in correct order (Other at end)
           // Create arrays maintaining exact order
           const finalLabels = [...legendLabels];
           const finalValues = [...teamValues];
           const finalColors = [...teamColors];
-          const finalTextPositions = [...textPositions];
           
           Plotly.react('productTeamChart', [{
             labels: finalLabels,
@@ -642,9 +644,8 @@
             },
             text: sliceText,
             textinfo: 'text',
-            textposition: finalTextPositions,
+            textposition: 'outside',
             textfont: { color: '#e2e8f0', size: 11 },
-            insidetextorientation: 'horizontal',
             hovertemplate: '<b>%{label}</b><br>Issues: %{value}<br>Percentage: %{percent}<extra></extra>'
           }], {
             margin: { t: 30, b: 20, l: 20, r: 20 },
@@ -669,6 +670,29 @@
               showarrow: false
             }]
           }, {displayModeBar:false});
+          
+          // Hide connector lines after chart renders
+          setTimeout(() => {
+            const chartEl = document.getElementById('productTeamChart');
+            if (chartEl) {
+              const svg = chartEl.querySelector('svg');
+              if (svg) {
+                // Find and hide paths that are connector lines
+                // Connector lines are typically short straight paths with stroke
+                const paths = svg.querySelectorAll('path');
+                paths.forEach(path => {
+                  const d = path.getAttribute('d') || '';
+                  const stroke = path.getAttribute('stroke');
+                  const strokeWidth = parseFloat(path.getAttribute('stroke-width') || '0');
+                  // Connector lines: have stroke, are relatively short, and don't contain arc commands
+                  if (stroke && strokeWidth > 0 && d.length < 300 && !d.includes('A') && !d.includes('C') && !d.includes('Q')) {
+                    path.style.display = 'none';
+                    path.style.visibility = 'hidden';
+                  }
+                });
+              }
+            }
+          }, 200);
         }
       }
 
