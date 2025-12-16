@@ -177,17 +177,17 @@
       </div>
       <div class="charts-grid">
         <div class="card">
-          <h3>Bugs: Solved vs Opened</h3>
+          <h3>Bugs: Solved vs Opened (Client-Reported)</h3>
           <div id="bugsChart" class="chart"></div>
         </div>
         <div class="card">
-          <h3>ZD Tickets: Solved vs Opened</h3>
+          <h3>ZD Tickets: Solved vs Opened (Client-Reported)</h3>
           <div id="ticketsChart" class="chart"></div>
         </div>
       </div>
       <div class="section">
         <div class="card">
-          <h3>Net New Bugs Per Release</h3>
+          <h3>Net New Bugs Per Release (Client-Reported)</h3>
           <div id="openedChart" class="chart"></div>
         </div>
       </div>
@@ -417,8 +417,8 @@
         datePill.textContent = new Date(r.date).toLocaleDateString();
 
         const topCards = [
-          { label: 'Bugs solved', value: r.totalBugsSolved, color: colors.trueBlue },
-          { label: 'Bugs opened', value: r.bugsOpened, color: colors.frySauce },
+          { label: 'Bugs Solved (Client-Reported)', value: r.totalBugsSolved, color: colors.trueBlue },
+          { label: 'Bugs Opened (Client-Reported)', value: r.bugsOpened, color: colors.frySauce },
         ];
         const bottomCards = [
           { label: 'Support tickets solved', value: r.totalZdSolved, color: colors.deepBlue },
@@ -619,13 +619,21 @@
           const sliceText = teamValues.map(val => val.toString());
           const legendLabels = teamNames.map((name, i) => `${name} (${teamValues[i]})`);
           
+          // Ensure data is in correct order (Other at end)
+          // Create arrays maintaining exact order
+          const finalLabels = [...legendLabels];
+          const finalValues = [...teamValues];
+          const finalColors = [...teamColors];
+          
           Plotly.react('productTeamChart', [{
-            labels: legendLabels,
-            values: teamValues,
+            labels: finalLabels,
+            values: finalValues,
             type: 'pie',
             hole: 0.5,
+            direction: 'clockwise',
+            rotation: 0,
             marker: {
-              colors: teamColors,
+              colors: finalColors,
               line: { color: '#0f1f2c', width: 2 }
             },
             text: sliceText,
