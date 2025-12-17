@@ -191,10 +191,14 @@
           <div id="ticketsChart" class="chart"></div>
         </div>
       </div>
-      <div class="section">
+      <div class="section charts-grid">
         <div class="card">
           <h3>Net New Bugs Per Release (Client-Reported)</h3>
           <div id="openedChart" class="chart"></div>
+        </div>
+        <div class="card">
+          <h3>Hotfixes Per Release</h3>
+          <div id="hotfixesChart" class="chart"></div>
         </div>
       </div>
 
@@ -383,6 +387,7 @@
             });
             return Object.keys(teams).length > 0 ? teams : null;
           })(),
+          hotfixes: toInt('hotfixes'),
         };
       }).filter(Boolean).sort((a, b) => new Date(a.date) - new Date(b.date));
     }
@@ -763,6 +768,19 @@
         },
       ], { margin:{t:12,b:70,l:50,r:10}, legend:{orientation:'h',x:0,y:1.05}, paper_bgcolor:'rgba(0,0,0,0)', plot_bgcolor:'rgba(0,0,0,0)', font:{color:'#e2e8f0'}, yaxis:{title:'Net new bugs', gridcolor:'#1f2937'} }, {displayModeBar:false});
 
+      Plotly.newPlot('hotfixesChart', [
+        { 
+          name:'Hotfixes', 
+          x:names, 
+          y: recent.map(r => r.hotfixes), 
+          type:'bar', 
+          marker:{color: colors.gold},
+          text: recent.map(r => r.hotfixes),
+          textposition: 'top',
+          textfont: { color: '#0f1f2c', size: 12 }
+        },
+      ], { margin:{t:12,b:70,l:50,r:10}, legend:{orientation:'h',x:0,y:1.05}, paper_bgcolor:'rgba(0,0,0,0)', plot_bgcolor:'rgba(0,0,0,0)', font:{color:'#e2e8f0'}, yaxis:{title:'Hotfixes', gridcolor:'#1f2937'} }, {displayModeBar:false});
+
       const minNet = Math.min(...recent.map(r => r.netNew));
       const maxNet = Math.max(...recent.map(r => r.netNew));
 
@@ -794,7 +812,7 @@
         <table>
           <thead>
             <tr>
-              <th>Release</th><th>Date</th><th>Bugs solved</th><th>Bugs opened</th><th>ZD tickets solved</th><th>ZD tickets opened</th><th>Net new bugs</th><th>P2 within</th><th>P2 over</th><th>P3 within</th><th>P3 over</th>
+              <th>Release</th><th>Date</th><th>Bugs solved</th><th>Bugs opened</th><th>ZD tickets solved</th><th>ZD tickets opened</th><th>Net new bugs</th><th>Hotfixes</th><th>P2 within</th><th>P2 over</th><th>P3 within</th><th>P3 over</th>
             </tr>
           </thead>
           <tbody>
@@ -813,6 +831,7 @@
                 <td>${fmt(r.totalZdSolved)}</td>
                 <td>${fmt(r.zdOpened)}</td>
                 <td><strong>${fmt(r.netNew)}</strong></td>
+                <td>${fmt(r.hotfixes)}</td>
                 <td>${fmt(r.p2Within)}</td>
                 <td>${fmt(r.p2Over)}</td>
                 <td>${fmt(r.p3Within)}</td>
@@ -853,7 +872,7 @@
       .then(renderApp)
       .then(() => {
         window.addEventListener('resize', () => {
-          ['bugsChart','ticketsChart','openedChart'].forEach(id => {
+          ['bugsChart','ticketsChart','openedChart','hotfixesChart'].forEach(id => {
             const el = document.getElementById(id);
             if (el) Plotly.Plots.resize(el);
           });
