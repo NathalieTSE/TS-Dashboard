@@ -39,8 +39,9 @@
       margin: 0;
       font-family: 'Inter', system-ui, -apple-system, sans-serif;
       background:
-        radial-gradient(circle at 20% 20%, rgba(0,98,227,0.16), transparent 26%),
-        radial-gradient(circle at 80% 0%, rgba(143,206,238,0.18), transparent 24%),
+        radial-gradient(circle at 20% 20%, rgba(0,98,227,0.12), transparent 26%),
+        radial-gradient(circle at 80% 0%, rgba(143,206,238,0.14), transparent 24%),
+        url('background.png') center top / cover no-repeat fixed,
         var(--bg);
       color: white;
       min-height: 100vh;
@@ -774,7 +775,7 @@
           x:names, 
           y: recent.map(r => r.hotfixes), 
           type:'bar', 
-          marker:{color: colors.frySauce},
+          marker:{color: colors.gold},
           text: recent.map(r => r.hotfixes),
           textposition: 'top',
           textfont: { color: '#0f1f2c', size: 12 }
