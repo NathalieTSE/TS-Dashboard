@@ -394,7 +394,7 @@
             const teamData = get('product teams hotfixes').replace(/^"|"$/g, '').trim();
             if (!teamData) return null;
             const teams = {};
-            teamData.split(';').forEach(item => {
+            teamData.split(',').forEach(item => {
               const [name, count] = item.split(':').map(s => s.trim());
               if (name && count) {
                 teams[name] = parseInt(count, 10) || 0;
