@@ -119,7 +119,9 @@
     .chart { height: 320px; }
     /* Hide connector lines in pie chart - these are thin lines connecting text to slices */
     #productTeamChart .js-plotly-plot svg g[class*="pie"] path[stroke-width="1"],
-    #productTeamChart .js-plotly-plot svg g[class*="pie"] path[stroke-width="2"] {
+    #productTeamChart .js-plotly-plot svg g[class*="pie"] path[stroke-width="2"],
+    #productTeamHotfixesChart .js-plotly-plot svg g[class*="pie"] path[stroke-width="1"],
+    #productTeamHotfixesChart .js-plotly-plot svg g[class*="pie"] path[stroke-width="2"] {
       stroke: none !important;
       display: none !important;
     }
@@ -388,6 +390,18 @@
             return Object.keys(teams).length > 0 ? teams : null;
           })(),
           hotfixes: toInt('hotfixes'),
+          productTeamHotfixes: (() => {
+            const teamData = get('product teams hotfixes').replace(/^"|"$/g, '').trim();
+            if (!teamData) return null;
+            const teams = {};
+            teamData.split(';').forEach(item => {
+              const [name, count] = item.split(':').map(s => s.trim());
+              if (name && count) {
+                teams[name] = parseInt(count, 10) || 0;
+              }
+            });
+            return Object.keys(teams).length > 0 ? teams : null;
+          })(),
         };
       }).filter(Boolean).sort((a, b) => new Date(a.date) - new Date(b.date));
     }
@@ -428,7 +442,7 @@
         datePill.textContent = new Date(r.date).toLocaleDateString();
 
         const topCards = [
-          { label: 'Bugs Solved (Client-Reported)', value: r.totalBugsSolved, color: colors.trueBlue },
+          { label: 'Bugs Solved (Client-Reported)', value: r.totalBugsSolved, color: colors.trueBlue, breakdown: `${fmt(r.lxpBugs)} LXP, ${fmt(r.acmBugs)} ACM` },
           { label: 'Bugs Opened (Client-Reported)', value: r.bugsOpened, color: colors.frySauce },
         ];
         const bottomCards = [
@@ -443,6 +457,7 @@
               <div class="card" style="border-color: rgba(255,255,255,0.04);">
                 <h3>${c.label}</h3>
                 <div class="big-number" style="color:${c.color}; font-size: 36px;">${fmt(c.value)}</div>
+                ${c.breakdown ? `<div class="muted" style="margin-top: 4px; font-size: 12px;">${c.breakdown}</div>` : ''}
                 <div class="muted">Release ${r.release}</div>
               </div>
             `).join('')}
@@ -470,29 +485,22 @@
         detailTable.innerHTML = `
           <div class="detail-table-wrapper" style="display: grid; grid-template-columns: calc(50% - 10px) calc(50% - 10px); gap: 20px; align-items: stretch; width: 100%;">
             <div class="card" style="display: flex; flex-direction: column; width: 100%; min-width: 0;">
-              <h3 style="margin-top: 0;">Full Metric Breakdown</h3>
-              <table style="margin-top: 8px; width: 100%;">
-                <thead>
-                  <tr>
-                    <th>Area</th><th>Bugs Solved</th><th>ZD Tickets Solved</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr><td>LXP</td><td>${fmt(r.lxpBugs)}</td><td>${fmt(r.lxpZd)}</td></tr>
-                  <tr><td>ACM</td><td>${fmt(r.acmBugs)}</td><td>${fmt(r.acmZd)}</td></tr>
-                  <tr><td><strong>Total</strong></td><td><strong>${fmt(r.totalBugsSolved)}</strong></td><td><strong>${fmt(r.totalZdSolved)}</strong></td></tr>
-                </tbody>
-              </table>
+              <h3 style="margin-top: 0;">Trend Analysis</h3>
+              <div style="color: #e2e8f0; line-height: 1.8; font-size: 13px; white-space: pre-wrap; margin-top: 8px; flex: 1;">${formattedTrendText}</div>
+            </div>
+            <div class="card" style="display: flex; flex-direction: column; width: 100%; min-width: 0;">
               ${r.productTeam ? `
-                <div style="margin-top: 16px;">
-                  <h3 style="margin-top: 12px; margin-bottom: 8px;">Product Team Breakdown</h3>
+                <div>
+                  <h3 style="margin-top: 0; margin-bottom: 8px;">Product Team Breakdown</h3>
                   <div id="productTeamChart" class="chart" style="height: 300px;"></div>
                 </div>
               ` : ''}
-            </div>
-            <div class="card" style="display: flex; flex-direction: column; width: 100%; min-width: 0;">
-              <h3 style="margin-top: 0;">Trend Analysis</h3>
-              <div style="color: #e2e8f0; line-height: 1.8; font-size: 13px; white-space: pre-wrap; margin-top: 8px; flex: 1;">${formattedTrendText}</div>
+              ${r.productTeamHotfixes ? `
+                <div style="margin-top: ${r.productTeam ? '16px' : '0'};">
+                  <h3 style="margin-top: ${r.productTeam ? '12px' : '0'}; margin-bottom: 8px;">Product Teams Hotfixes</h3>
+                  <div id="productTeamHotfixesChart" class="chart" style="height: 300px;"></div>
+                </div>
+              ` : ''}
             </div>
           </div>
         `;
@@ -679,6 +687,163 @@
           // Hide connector lines after chart renders
           setTimeout(() => {
             const chartEl = document.getElementById('productTeamChart');
+            if (chartEl) {
+              const svg = chartEl.querySelector('svg');
+              if (svg) {
+                // Find and hide paths that are connector lines
+                // Connector lines are typically short straight paths with stroke
+                const paths = svg.querySelectorAll('path');
+                paths.forEach(path => {
+                  const d = path.getAttribute('d') || '';
+                  const stroke = path.getAttribute('stroke');
+                  const strokeWidth = parseFloat(path.getAttribute('stroke-width') || '0');
+                  // Connector lines: have stroke, are relatively short, and don't contain arc commands
+                  if (stroke && strokeWidth > 0 && d.length < 300 && !d.includes('A') && !d.includes('C') && !d.includes('Q')) {
+                    path.style.display = 'none';
+                    path.style.visibility = 'hidden';
+                  }
+                });
+              }
+            }
+          }, 200);
+        }
+
+        // Product Teams Hotfixes pie chart (only if data exists)
+        if (r.productTeamHotfixes) {
+          // Helper function to lighten a hex color (percent is 0-1, where 1 = fully white)
+          const lightenColor = (hex, percent) => {
+            // Normalize hex color - ensure uppercase and # prefix
+            let cleanHex = String(hex).trim().toUpperCase();
+            if (!cleanHex.startsWith('#')) {
+              cleanHex = '#' + cleanHex;
+            }
+            const hexValue = cleanHex.replace('#', '');
+            if (hexValue.length !== 6) {
+              return hex; // Return original if invalid
+            }
+            const num = parseInt(hexValue, 16);
+            if (isNaN(num)) {
+              return hex; // Return original if invalid
+            }
+            const r = (num >> 16) & 0xFF;
+            const g = (num >> 8) & 0xFF;
+            const b = num & 0xFF;
+            // Blend with white - ensure values don't exceed 255
+            const newR = Math.min(255, Math.round(r + (255 - r) * percent));
+            const newG = Math.min(255, Math.round(g + (255 - g) * percent));
+            const newB = Math.min(255, Math.round(b + (255 - b) * percent));
+            const result = '#' + ((newR << 16) | (newG << 8) | newB).toString(16).padStart(6, '0').toUpperCase();
+            return result;
+          };
+          
+          // Convert teams to array and sort: "Other" ALWAYS at bottom
+          let teamEntries = Object.entries(r.productTeamHotfixes);
+          const hasOther = teamEntries.some(([name]) => name.toLowerCase() === 'other');
+          
+          if (hasOther) {
+            // Separate "Other" and sort the rest
+            const otherEntry = teamEntries.find(([name]) => name.toLowerCase() === 'other');
+            const otherEntries = teamEntries.filter(([name]) => name.toLowerCase() !== 'other');
+            // Sort by value descending (excluding Other)
+            otherEntries.sort((a, b) => b[1] - a[1]);
+            teamEntries = [...otherEntries, otherEntry];
+          } else {
+            // Sort by value descending
+            teamEntries.sort((a, b) => b[1] - a[1]);
+          }
+          
+          const teamNames = teamEntries.map(([name]) => name);
+          const teamValues = teamEntries.map(([, value]) => value);
+          const totalIssues = teamValues.reduce((sum, val) => sum + val, 0);
+          
+          // Use brand colors, making them lighter on reuse
+          // Define base colors and their lighter variants
+          const colorPalette = [
+            { base: colors.trueBlue.toUpperCase(), light1: '#4D9EFF', light2: '#80B8FF', light3: '#B3D2FF' },
+            { base: colors.deepBlue.toUpperCase(), light1: '#4D66FF', light2: '#8094FF', light3: '#B3C2FF' },
+            { base: colors.sky.toUpperCase(), light1: '#B3E0F7', light2: '#D1EDFB', light3: '#E8F6FD' },
+            { base: colors.frySauce.toUpperCase(), light1: '#FFA68A', light2: '#FFC2B0', light3: '#FFDED6' },
+            { base: colors.gold.toUpperCase(), light1: '#FFE070', light2: '#FFE99F', light3: '#FFF2CE' },
+            { base: '#8FCEEE', light1: '#B3E0F7', light2: '#D1EDFB', light3: '#E8F6FD' },
+            { base: '#0026EE', light1: '#4D66FF', light2: '#8094FF', light3: '#B3C2FF' },
+            { base: '#FED141', light1: '#FFE070', light2: '#FFE99F', light3: '#FFF2CE' },
+            { base: '#FF7F64', light1: '#FFA68A', light2: '#FFC2B0', light3: '#FFDED6' },
+            { base: '#0062E3', light1: '#4D9EFF', light2: '#80B8FF', light3: '#B3D2FF' }
+          ];
+          const colorUsageMap = new Map(); // Track usage: key = baseColor string, value = count
+          
+          const teamColors = teamNames.map((_, i) => {
+            const paletteIndex = i % colorPalette.length;
+            const palette = colorPalette[paletteIndex];
+            const baseColor = palette.base;
+            const usageCount = colorUsageMap.get(baseColor) || 0;
+            colorUsageMap.set(baseColor, usageCount + 1);
+            
+            // Return lighter variant based on usage count
+            if (usageCount === 0) {
+              return baseColor;
+            } else if (usageCount === 1) {
+              return palette.light1;
+            } else if (usageCount === 2) {
+              return palette.light2;
+            } else {
+              return palette.light3;
+            }
+          });
+          
+          // Create text for slices (just numbers) and labels for legend (name + number)
+          const sliceText = teamValues.map(val => val.toString());
+          const legendLabels = teamNames.map((name, i) => `${name} (${teamValues[i]})`);
+          
+          // Ensure data is in correct order (Other at end)
+          // Create arrays maintaining exact order
+          const finalLabels = [...legendLabels];
+          const finalValues = [...teamValues];
+          const finalColors = [...teamColors];
+          
+          Plotly.react('productTeamHotfixesChart', [{
+            labels: finalLabels,
+            values: finalValues,
+            type: 'pie',
+            hole: 0.5,
+            direction: 'clockwise',
+            rotation: 0,
+            marker: {
+              colors: finalColors,
+              line: { color: '#0f1f2c', width: 2 }
+            },
+            text: sliceText,
+            textinfo: 'text',
+            textposition: 'outside',
+            textfont: { color: '#e2e8f0', size: 11 },
+            hovertemplate: '<b>%{label}</b><br>Hotfixes: %{value}<br>Percentage: %{percent}<extra></extra>'
+          }], {
+            margin: { t: 30, b: 20, l: 20, r: 20 },
+            paper_bgcolor: 'rgba(0,0,0,0)',
+            plot_bgcolor: 'rgba(0,0,0,0)',
+            font: { color: '#e2e8f0' },
+            automargin: false,
+            showlegend: true,
+            legend: {
+              orientation: 'v',
+              x: 1.05,
+              y: 0.5,
+              font: { color: '#e2e8f0', size: 11 },
+              traceorder: 'normal',
+              itemorder: 'normal'
+            },
+            annotations: [{
+              text: `<b>Total Hotfixes</b><br>${totalIssues}`,
+              x: 0.5,
+              y: 0.5,
+              font: { size: 14, color: '#e2e8f0' },
+              showarrow: false
+            }]
+          }, {displayModeBar:false});
+          
+          // Hide connector lines after chart renders
+          setTimeout(() => {
+            const chartEl = document.getElementById('productTeamHotfixesChart');
             if (chartEl) {
               const svg = chartEl.querySelector('svg');
               if (svg) {
