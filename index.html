@@ -458,7 +458,6 @@
                 <h3>${c.label}</h3>
                 <div class="big-number" style="color:${c.color}; font-size: 36px;">${fmt(c.value)}</div>
                 ${c.breakdown ? `<div class="muted" style="margin-top: 4px; font-size: 12px;">${c.breakdown}</div>` : ''}
-                <div class="muted">Release ${r.release}</div>
               </div>
             `).join('')}
           </div>
@@ -467,7 +466,6 @@
               <div class="card" style="border-color: rgba(255,255,255,0.04);">
                 <h3 style="font-size: 13px;">${c.label}</h3>
                 <div class="big-number" style="color:${c.color}; font-size: 24px;">${fmt(c.value)}</div>
-                <div class="muted" style="font-size: 11px;">Release ${r.release}</div>
               </div>
             `).join('')}
           </div>
@@ -495,7 +493,7 @@
                   <div id="productTeamChart" class="chart" style="height: 300px;"></div>
                 </div>
               ` : ''}
-              ${r.productTeamHotfixes ? `
+              ${r.productTeamHotfixes && Object.keys(r.productTeamHotfixes).length > 0 ? `
                 <div style="margin-top: ${r.productTeam ? '16px' : '0'};">
                   <h3 style="margin-top: ${r.productTeam ? '12px' : '0'}; margin-bottom: 8px;">Product Teams Hotfixes</h3>
                   <div id="productTeamHotfixesChart" class="chart" style="height: 300px;"></div>
@@ -709,7 +707,7 @@
         }
 
         // Product Teams Hotfixes pie chart (only if data exists)
-        if (r.productTeamHotfixes) {
+        if (r.productTeamHotfixes && Object.keys(r.productTeamHotfixes).length > 0) {
           // Helper function to lighten a hex color (percent is 0-1, where 1 = fully white)
           const lightenColor = (hex, percent) => {
             // Normalize hex color - ensure uppercase and # prefix
@@ -801,7 +799,20 @@
           const finalValues = [...teamValues];
           const finalColors = [...teamColors];
           
-          Plotly.react('productTeamHotfixesChart', [{
+          // Wait for DOM to be ready before rendering
+          setTimeout(() => {
+            const chartEl = document.getElementById('productTeamHotfixesChart');
+            if (!chartEl) {
+              console.warn('Product Teams Hotfixes chart element not found');
+              return;
+            }
+            
+            if (finalValues.length === 0 || finalLabels.length === 0) {
+              console.warn('Product Teams Hotfixes: No data to display');
+              return;
+            }
+            
+            Plotly.newPlot('productTeamHotfixesChart', [{
             labels: finalLabels,
             values: finalValues,
             type: 'pie',
@@ -841,28 +852,29 @@
             }]
           }, {displayModeBar:false});
           
-          // Hide connector lines after chart renders
-          setTimeout(() => {
-            const chartEl = document.getElementById('productTeamHotfixesChart');
-            if (chartEl) {
-              const svg = chartEl.querySelector('svg');
-              if (svg) {
-                // Find and hide paths that are connector lines
-                // Connector lines are typically short straight paths with stroke
-                const paths = svg.querySelectorAll('path');
-                paths.forEach(path => {
-                  const d = path.getAttribute('d') || '';
-                  const stroke = path.getAttribute('stroke');
-                  const strokeWidth = parseFloat(path.getAttribute('stroke-width') || '0');
-                  // Connector lines: have stroke, are relatively short, and don't contain arc commands
-                  if (stroke && strokeWidth > 0 && d.length < 300 && !d.includes('A') && !d.includes('C') && !d.includes('Q')) {
-                    path.style.display = 'none';
-                    path.style.visibility = 'hidden';
-                  }
-                });
+            // Hide connector lines after chart renders
+            setTimeout(() => {
+              const chartEl = document.getElementById('productTeamHotfixesChart');
+              if (chartEl) {
+                const svg = chartEl.querySelector('svg');
+                if (svg) {
+                  // Find and hide paths that are connector lines
+                  // Connector lines are typically short straight paths with stroke
+                  const paths = svg.querySelectorAll('path');
+                  paths.forEach(path => {
+                    const d = path.getAttribute('d') || '';
+                    const stroke = path.getAttribute('stroke');
+                    const strokeWidth = parseFloat(path.getAttribute('stroke-width') || '0');
+                    // Connector lines: have stroke, are relatively short, and don't contain arc commands
+                    if (stroke && strokeWidth > 0 && d.length < 300 && !d.includes('A') && !d.includes('C') && !d.includes('Q')) {
+                      path.style.display = 'none';
+                      path.style.visibility = 'hidden';
+                    }
+                  });
+                }
               }
-            }
-          }, 200);
+            }, 250);
+          }, 100);
         }
       }
 
