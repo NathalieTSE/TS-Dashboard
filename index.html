@@ -250,7 +250,9 @@
     const csvUrl = encodeURI('Release Metrics - release (summarised).csv');
 
     async function loadCsv() {
-      const res = await fetch(csvUrl);
+      // Add cache-busting parameter to ensure we always get the latest CSV
+      const cacheBuster = `?t=${Date.now()}`;
+      const res = await fetch(csvUrl + cacheBuster);
       if (!res.ok) throw new Error('Could not load CSV. If opening file://, start a local server (see notes below).');
       const text = await res.text();
       return parseCsv(text);
