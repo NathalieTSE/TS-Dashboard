@@ -448,9 +448,9 @@
           { label: 'Bugs Opened (Client-Reported)', value: r.bugsOpened, color: colors.frySauce },
         ];
         const bottomCards = [
-          { label: 'Support tickets solved', value: r.totalZdSolved, color: colors.deepBlue },
-          { label: 'Support tickets opened', value: r.zdOpened, color: colors.gold },
-          { label: 'Client associations solved', value: r.totalSfSolved, color: colors.sky },
+          { label: 'Support tickets solved', value: r.totalZdSolved, color: colors.trueBlue },
+          { label: 'Support tickets opened', value: r.zdOpened, color: colors.frySauce },
+          { label: 'Client associations solved', value: r.totalSfSolved, color: colors.trueBlue },
           { label: 'Client associations opened', value: r.sfOpened, color: colors.frySauce },
         ];
         kpiCards.innerHTML = `
@@ -917,7 +917,7 @@
           x:names, 
           y: recent.map(r => r.totalZdSolved), 
           type:'bar', 
-          marker:{color: colors.deepBlue},
+          marker:{color: colors.trueBlue},
           text: recent.map(r => r.totalZdSolved),
           textposition: 'top',
           textfont: { color: 'white', size: 11 }
@@ -927,7 +927,7 @@
           x:names, 
           y: recent.map(r => r.zdOpened), 
           type:'bar', 
-          marker:{color: colors.gold},
+          marker:{color: colors.frySauce},
           text: recent.map(r => r.zdOpened),
           textposition: 'top',
           textfont: { color: 'black', size: 11 }
