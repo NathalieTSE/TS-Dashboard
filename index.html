@@ -446,7 +446,7 @@
         const topCards = [
           { label: 'Bugs Solved (Client-Reported)', value: r.totalBugsSolved, color: colors.trueBlue, breakdown: `${fmt(r.lxpBugs)} LXP, ${fmt(r.acmBugs)} ACM` },
           { label: 'Bugs Opened (Client-Reported)', value: r.bugsOpened, color: colors.frySauce },
-          { label: 'Net New Bugs (Client-Reported)', value: r.netNew, color: colors.frySauce },
+          { label: 'Net New Bugs (Client-Reported)', value: r.netNew, color: r.netNew < 0 ? colors.trueBlue : colors.frySauce },
         ];
         const bottomCards = [
           { label: 'Support tickets solved', value: r.totalZdSolved, color: colors.trueBlue },
