@@ -446,6 +446,7 @@
         const topCards = [
           { label: 'Bugs Solved (Client-Reported)', value: r.totalBugsSolved, color: colors.trueBlue, breakdown: `${fmt(r.lxpBugs)} LXP, ${fmt(r.acmBugs)} ACM` },
           { label: 'Bugs Opened (Client-Reported)', value: r.bugsOpened, color: colors.frySauce },
+          { label: 'Net New Bugs (Client-Reported)', value: r.netNew, color: colors.frySauce },
         ];
         const bottomCards = [
           { label: 'Support tickets solved', value: r.totalZdSolved, color: colors.trueBlue },
@@ -454,7 +455,7 @@
           { label: 'Client associations opened', value: r.sfOpened, color: colors.frySauce },
         ];
         kpiCards.innerHTML = `
-          <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 12px;">
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; margin-bottom: 12px;">
             ${topCards.map(c => `
               <div class="card" style="border-color: rgba(255,255,255,0.04);">
                 <h3>${c.label}</h3>
