@@ -439,8 +439,8 @@
         <div style="background:#FF7F64"></div>
       </div>`;
 
-    const thumbUpSvg = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M7 22H4C2.9 22 2 21.1 2 20V13H7V22Z" fill="#0062e3"/><path d="M7 11V3C7 2.45 7.45 2 8 2H10C11.1 2 12 2.9 12 4V9.5C12 10.05 12.45 10.5 13 10.5H19.78C20.39 10.5 20.85 11.11 20.69 11.7L17.85 21.19C17.71 21.66 17.27 22 16.78 22H7V11Z" fill="#0062e3"/></svg>`;
-    const thumbDownSvg = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M17 2H20C21.1 2 22 2.9 22 4V11H17V2Z" fill="#ff7f64"/><path d="M17 13V21C17 21.55 16.55 22 16 22H14C12.9 22 12 21.1 12 20V14.5C12 13.95 11.55 13.5 11 13.5H4.22C3.61 13.5 3.15 12.89 3.31 12.3L6.15 2.81C6.29 2.34 6.73 2 7.22 2H17V13Z" fill="#ff7f64"/></svg>`;
+    const thumbUpSvg = `<svg width="14" height="14" viewBox="0 0 24 24" fill="#0062e3" aria-hidden="true"><path d="M1 21h4V9H1v12zm22-11c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 1 7.59 7.59C7.22 7.95 7 8.45 7 9v10c0 1.1.9 2 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-2z"/></svg>`;
+    const thumbDownSvg = `<svg width="14" height="14" viewBox="0 0 24 24" fill="#ff7f64" aria-hidden="true"><path d="M15 3H6c-.83 0-1.54.5-1.84 1.22l-3.02 7.05c-.09.23-.14.47-.14.73v2c0 1.1.9 2 2 2h6.31l-.95 4.57-.03.32c0 .41.17.79.44 1.06L9.83 23 16.41 16.41c.37-.36.59-.86.59-1.41V6c0-1.1-.9-2-2-2zm4 0v12h4V3h-4z"/></svg>`;
 
     async function loadCsv() {
       const res = await fetch(csvUrl + '?t=' + Date.now());
