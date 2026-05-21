@@ -3,426 +3,890 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex, nocache" />
-  <meta name="googlebot" content="noindex, nofollow, noarchive, nosnippet, noimageindex" />
-  <meta name="bingbot" content="noindex, nofollow, noarchive, nosnippet, noimageindex" />
-  <meta name="slurp" content="noindex, nofollow, noarchive, nosnippet, noimageindex" />
-  <meta name="duckduckbot" content="noindex, nofollow, noarchive, nosnippet, noimageindex" />
-  <meta name="baiduspider" content="noindex, nofollow, noarchive, nosnippet, noimageindex" />
-  <meta name="yandexbot" content="noindex, nofollow, noarchive, nosnippet, noimageindex" />
-  <meta name="facebookexternalhit" content="noindex, nofollow" />
-  <meta name="twitterbot" content="noindex, nofollow" />
-  <meta name="linkedinbot" content="noindex, nofollow" />
+  <meta name="robots" content="noindex, nofollow" />
   <title>Release Metrics Dashboard</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
   <style>
     :root {
-      color-scheme: light;
-      --bg: #0f1f2c; /* Moonshot */
-      --panel: #0f1f2c;
-      --muted: #9fb3c8;
-      --card: #122237;
-      --accent: #0062e3;   /* True Blue */
-      --accent-2: #0026ee; /* Deep Blue */
-      --accent-3: #8fceee; /* Sky 2.0 */
-      --highlight: #fed141; /* Gold Medal */
-      --warn: #ff7f64; /* Fry Sauce */
-      --border: #1f2f46;
+      --true-blue: #0062e3;
+      --moonshot: #0f1f2c;
+      --fry-sauce: #ff7f64;
+      --grey-bg: #f3f4f4;
+      --border: #e2e8f0;
+      --muted: #64748b;
     }
     * { box-sizing: border-box; }
     body {
       margin: 0;
-      font-family: 'Inter', system-ui, -apple-system, sans-serif;
-      background:
-        radial-gradient(circle at 20% 20%, rgba(0,98,227,0.16), transparent 26%),
-        radial-gradient(circle at 80% 0%, rgba(143,206,238,0.18), transparent 24%),
-        var(--bg);
-      color: white;
+      font-family: 'Inter', system-ui, sans-serif;
+      background: #eef1f5;
+      color: var(--moonshot);
       min-height: 100vh;
     }
-    header {
-      padding: 24px 32px 12px;
-      border-bottom: 1px solid var(--border);
-      background: rgba(15,23,42,0.8);
-      backdrop-filter: blur(12px);
-      position: sticky;
-      top: 0;
-      z-index: 10;
-    }
-    h1 { margin: 0 0 4px; font-size: 22px; }
-    h2 { margin: 12px 0 8px; font-size: 16px; color: #e2e8f0; }
-    p { margin: 0; color: var(--muted); }
-    main { 
-      padding: 16px 32px 32px; 
+    .page-shell {
       max-width: 1600px;
       margin: 0 auto;
+      padding-left: 32px;
+      padding-right: 32px;
       width: 100%;
+    }
+    header {
+      background: #fff;
+      border-bottom: 1px solid var(--border);
+      padding: 20px 0 16px;
+    }
+    header h1 { margin: 0 0 4px; font-size: 20px; font-weight: 700; }
+    header p { margin: 0; color: var(--muted); font-size: 14px; }
+    .release-overview {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+    .release-overview h2 {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--moonshot);
+    }
+    select {
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font-size: 14px;
+      min-width: 240px;
+      background: #fff;
+    }
+    .meta-pill {
+      font-size: 12px;
+      font-weight: 600;
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: var(--grey-bg);
+      color: var(--moonshot);
+    }
+    .meta-pill.major {
+      background: rgba(0, 98, 227, 0.1);
+      color: var(--true-blue);
     }
     .tabs { display: flex; gap: 8px; margin-top: 12px; }
     .tab {
       padding: 8px 14px;
       border-radius: 10px;
       border: 1px solid var(--border);
-      color: white;
+      background: #fff;
+      color: var(--moonshot);
       cursor: pointer;
-      background: #0b1221;
+      font-size: 14px;
+      font-weight: 500;
+      font-family: inherit;
       transition: 150ms ease;
     }
-    .tab.active { background: var(--accent); border-color: transparent; box-shadow: 0 10px 24px rgba(0,98,227,0.32); }
-    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; margin-top: 12px; }
-    .card {
-      border: 1px solid var(--border);
-      background: rgba(15,31,44,0.92);
-      border-radius: 14px;
-      padding: 14px 16px;
-      box-shadow: 0 15px 40px rgba(0,0,0,0.25);
+    .tab:hover { border-color: var(--true-blue); }
+    .tab.active {
+      background: var(--true-blue);
+      color: #fff;
+      border-color: transparent;
     }
-    .card h3 { margin: 0 0 6px; font-size: 15px; color: #d9e3f5; }
-    .big-number { font-size: 28px; font-weight: 700; margin: 2px 0; }
-    .muted { color: var(--muted); font-size: 13px; }
-    .pill { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 999px; background: #0b1221; border: 1px solid var(--border); color: #e2e8f0; font-size: 12px; }
-    .pill.good { background: rgba(0,98,227,0.12); border-color: rgba(0,98,227,0.45); color: #b4d2ff; }
-    .pill.bad { background: rgba(255,127,100,0.12); border-color: rgba(255,127,100,0.45); color: #ffd5cb; }
-    select {
-      padding: 10px 12px;
-      background: #0b1221;
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      color: white;
-      min-width: 220px;
-      font-size: 14px;
+    .tab-panel { display: block; }
+    .compare-intro {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
     }
-    .btn {
-      padding: 10px 14px;
-      border-radius: 10px;
-      border: 1px solid var(--border);
-      background: #0b1221;
-      color: #e2e8f0;
-      cursor: pointer;
+    .compare-intro h2 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 700;
+    }
+    .compare-pills {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+    .compare-pill {
+      font-size: 12px;
       font-weight: 600;
-      transition: 120ms ease;
+      padding: 8px 12px;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
     }
-    .btn:hover { background: #152840; border-color: rgba(255,255,255,0.12); }
-    .btn.primary { background: var(--accent); border-color: transparent; color: #fff; box-shadow: 0 8px 24px rgba(0,98,227,0.35); }
-    table { width: 100%; border-collapse: collapse; color: #e2e8f0; }
-    th, td { padding: 10px 8px; border-bottom: 1px solid var(--border); font-size: 13px; }
-    th { text-align: left; color: var(--muted); font-weight: 600; }
-    tr:hover td { background: rgba(255,255,255,0.02); }
+    .compare-pill.good {
+      background: rgba(0, 98, 227, 0.1);
+      color: var(--true-blue);
+      border: 1px solid rgba(0, 98, 227, 0.25);
+    }
+    .compare-pill.bad {
+      background: rgba(255, 127, 100, 0.12);
+      color: #c45a48;
+      border: 1px solid rgba(255, 127, 100, 0.35);
+    }
+    .charts-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
     .table-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-    .table-wrapper table { min-width: 800px; }
-    .section { margin-top: 18px; }
-    .chart { height: 320px; }
-    /* Hide connector lines in pie chart - these are thin lines connecting text to slices */
-    #productTeamChart .js-plotly-plot svg g[class*="pie"] path[stroke-width="1"],
-    #productTeamChart .js-plotly-plot svg g[class*="pie"] path[stroke-width="2"],
-    #productTeamHotfixesChart .js-plotly-plot svg g[class*="pie"] path[stroke-width="1"],
-    #productTeamHotfixesChart .js-plotly-plot svg g[class*="pie"] path[stroke-width="2"] {
-      stroke: none !important;
-      display: none !important;
+    .table-wrapper table { min-width: 900px; width: 100%; border-collapse: collapse; font-size: 13px; }
+    .table-wrapper th {
+      text-align: left;
+      color: var(--muted);
+      font-weight: 600;
+      padding: 10px 8px;
+      border-bottom: 1px solid var(--border);
     }
-    .charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 14px; max-width: 100%; overflow: hidden; }
-    .charts-grid .card { max-width: 100%; overflow: hidden; }
-    .charts-grid .chart { max-width: 100%; }
-    .stacked { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
-    footer { margin-top: 16px; color: var(--muted); font-size: 12px; }
-    @media (max-width: 1400px) { 
-      .charts-grid { grid-template-columns: 1fr; } 
-      .stacked { grid-template-columns: 1fr; }
+    .table-wrapper td {
+      padding: 10px 8px;
+      border-bottom: 1px solid var(--border);
+      color: #334155;
     }
-    @media (max-width: 680px) { 
-      main { padding: 14px; } 
-      header { padding: 16px; }
-      .charts-grid { grid-template-columns: 1fr; }
-      .detail-table-wrapper { grid-template-columns: 1fr !important; }
+    .table-wrapper tr:hover td { background: var(--grey-bg); }
+    .table-wrapper tr.row-best td { background: rgba(0, 98, 227, 0.08); }
+    .table-wrapper tr.row-best td:first-child { border-left: 3px solid var(--true-blue); }
+    .table-wrapper tr.row-worst td { background: rgba(255, 127, 100, 0.1); }
+    .table-wrapper tr.row-worst td:first-child { border-left: 3px solid var(--fry-sauce); }
+    main {
+      padding: 20px 0 40px;
+    }
+    main > .page-shell {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+    /* v5 KPI panel (from degreed_support_stats_v5) */
+    .dg-wrap {
+      font-family: 'Inter', sans-serif;
+      background: #fff;
+      padding: 1.5rem 1.25rem 1.25rem;
+      border-radius: 16px;
+      border: 0.5px solid var(--border);
+      height: 100%;
+    }
+    .dg-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--moonshot);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 1.25rem;
+    }
+    .dg-title.release-heading {
+      font-size: 14px;
+      font-weight: 700;
+      text-transform: none;
+      letter-spacing: 0;
+      line-height: 1.35;
+      margin-bottom: 1.25rem;
+    }
+    .dg-section-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--true-blue);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+      margin-top: 1rem;
+      padding-bottom: 6px;
+      border-bottom: 1.5px solid var(--true-blue);
+    }
+    .dg-section-label:first-of-type { margin-top: 0; }
+    .dg-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 0.5rem; }
+    .dg-grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 0.5rem; }
+    .dg-card {
+      background: var(--grey-bg);
+      border-radius: 10px;
+      padding: 14px 16px 12px;
+      display: flex;
+      flex-direction: column;
+    }
+    .dg-card.blue { background: var(--true-blue); }
+    .dg-card.salmon { background: var(--fry-sauce); }
+    .dg-card-label {
+      font-size: 11px;
+      font-weight: 500;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 6px;
+      line-height: 1.3;
+    }
+    .dg-card.blue .dg-card-label,
+    .dg-card.salmon .dg-card-label { color: rgba(255,255,255,0.7); }
+    .dg-card-number {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--true-blue);
+      line-height: 1;
+      margin-bottom: auto;
+    }
+    .dg-card.blue .dg-card-number,
+    .dg-card.salmon .dg-card-number { color: #fff; }
+    .dg-pill {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 700;
+      border-radius: 20px;
+      padding: 2px 8px;
+      margin-top: 8px;
+      letter-spacing: 0.04em;
+      align-self: flex-start;
+    }
+    .dg-pill.on-blue { background: rgba(255,255,255,0.2); color: #fff; }
+    .dg-pill.on-grey { background: rgba(0,98,227,0.1); color: var(--true-blue); }
+    .dg-pill.on-salmon { background: rgba(255,255,255,0.2); color: #fff; }
+    .dg-pill.ghost { visibility: hidden; }
+    .dg-stripe {
+      display: flex;
+      height: 4px;
+      border-radius: 2px;
+      overflow: hidden;
+      margin-top: 1rem;
+      gap: 3px;
+    }
+    .dg-stripe div { flex: 1; border-radius: 2px; }
+    /* Trend panel — same visual language */
+    .trend-wrap {
+      background: #fff;
+      padding: 1.5rem 1.25rem;
+      border-radius: 16px;
+      border: 0.5px solid var(--border);
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+    .trend-wrap .dg-title { margin-bottom: 1rem; }
+    .trend-wrap .dg-stripe { margin-top: auto; flex-shrink: 0; }
+    .trend-body {
+      flex: 1;
+      font-size: 12px;
+      line-height: 1.75;
+      color: #334155;
+      overflow-y: auto;
+      max-height: 480px;
+    }
+    .trend-body p { margin: 0 0 1rem; }
+    .trend-body p:last-child { margin-bottom: 0; }
+    .trend-body strong { font-weight: 600; color: var(--moonshot); }
+    /* Top row: Support Bug Tracker (33%) | Trend Analysis (67%) */
+    .hero-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+      gap: 16px;
+      align-items: stretch;
+      margin-bottom: 16px;
+    }
+    .panel {
+      background: #fff;
+      border-radius: 16px;
+      border: 0.5px solid var(--border);
+      padding: 16px 18px;
+    }
+    .panel h3 {
+      margin: 0 0 12px;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--true-blue);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding-bottom: 8px;
+      border-bottom: 1.5px solid var(--true-blue);
+    }
+    .charts-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+    .chart { height: 300px; }
+    .pies-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    .pie-chart { height: 320px; }
+    .pie-empty {
+      color: var(--muted);
+      font-size: 14px;
+      padding: 24px;
+      text-align: center;
+    }
+    @media (max-width: 1100px) {
+      .hero-row { grid-template-columns: 1fr; }
+      .charts-row, .pies-row, .charts-grid { grid-template-columns: 1fr; }
+      .dg-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
   <header>
-    <h1>Release Metrics Dashboard</h1>
-    <p>Per-release deep dive and the last 10 releases compared.</p>
-    <div class="tabs">
-      <button class="tab active" data-tab="detail">Per release</button>
-      <button class="tab" data-tab="compare">Last 10 releases</button>
+    <div class="page-shell">
+      <h1>Release Metrics Dashboard</h1>
+      <p>Per-release deep dive and the last 10 releases compared.</p>
+      <div class="tabs">
+        <button type="button" class="tab active" data-tab="detail">Per release</button>
+        <button type="button" class="tab" data-tab="compare">Last 10 releases</button>
+      </div>
     </div>
   </header>
 
   <main>
-
+    <div class="page-shell">
     <section id="detail" class="tab-panel">
-      <div style="display:flex; gap:12px; align-items:center; flex-wrap: wrap;">
-        <h2 style="margin:0;">Release overview</h2>
-        <select id="releaseSelect"></select>
-        <span id="mprPill" class="pill"></span>
-        <span id="datePill" class="pill"></span>
+      <div class="release-overview">
+        <h2>Release overview</h2>
+        <select id="releaseSelect" aria-label="Select release"></select>
+        <span id="mprPill" class="meta-pill"></span>
       </div>
+    <div class="hero-row">
+      <div id="kpiPanel"></div>
+      <div id="trendPanel"></div>
+    </div>
 
-      <div id="kpiCards"></div>
-
-      <div class="stacked section">
-        <div class="card">
-          <h3>SLA Adherence</h3>
-          <div id="qualityChart" class="chart"></div>
-        </div>
-        <div class="card">
-          <h3>Support Load vs Delivery</h3>
-          <div id="supportChart" class="chart"></div>
-        </div>
+    <div class="charts-row">
+      <div class="panel">
+        <h3>SLA Adherence</h3>
+        <div id="qualityChart" class="chart"></div>
       </div>
+      <div class="panel">
+        <h3>Support Load vs Delivery</h3>
+        <div id="supportChart" class="chart"></div>
+      </div>
+    </div>
 
-      <div class="section" id="detailTable"></div>
+    <div class="pies-row">
+      <div class="panel">
+        <h3>Product Teams — Bugs Opened</h3>
+        <div id="productTeamChart" class="pie-chart"></div>
+      </div>
+      <div class="panel">
+        <h3>Product Teams — Hotfixes</h3>
+        <div id="productTeamHotfixesChart" class="pie-chart"></div>
+      </div>
+    </div>
     </section>
 
     <section id="compare" class="tab-panel" style="display:none;">
-      <div style="display:flex; align-items:center; gap:10px; flex-wrap: wrap;">
-        <h2 style="margin:0;">Last 10 releases</h2>
-        <span class="pill">Sorted oldest → newest</span>
+      <div class="compare-intro">
+        <h2>Last 10 releases</h2>
+        <span class="meta-pill">Sorted oldest → newest</span>
       </div>
       <div class="charts-grid">
-        <div class="card">
-          <h3>Bugs: Solved vs Opened (Client-Reported)</h3>
+        <div class="panel">
+          <h3>Bugs: Solved vs Opened</h3>
           <div id="bugsChart" class="chart"></div>
         </div>
-        <div class="card">
+        <div class="panel">
           <h3>ZD Tickets: Solved vs Opened</h3>
           <div id="ticketsChart" class="chart"></div>
         </div>
-      </div>
-      <div class="section charts-grid">
-        <div class="card">
-          <h3>Net New Bugs Per Release (Client-Reported)</h3>
+        <div class="panel">
+          <h3>Net New Bugs Per Release</h3>
           <div id="openedChart" class="chart"></div>
         </div>
-        <div class="card">
+        <div class="panel">
           <h3>Hotfixes Per Release</h3>
           <div id="hotfixesChart" class="chart"></div>
         </div>
       </div>
-
-      <div class="section card">
+      <div class="panel">
         <h3>Comparison Table</h3>
+        <div id="compareHighlights" class="compare-pills"></div>
         <div id="compareTable"></div>
       </div>
     </section>
-
-    <footer>
-      Data source: Release Metrics - release (summarised).csv · Charts: Plotly (client-only; no backend needed).
-      <div style="display:flex; gap:6px; flex-wrap:wrap; align-items:center; margin-top:12px; font-size:11px;">
-        <button id="exportPng" class="btn primary" style="padding:4px 8px; font-size:11px;">Export PNG</button>
-        <button id="exportPdf" class="btn" style="padding:4px 8px; font-size:11px;">Export PDF</button>
-        <span class="pill" style="font-size:10px; padding:4px 8px;">Exports capture what you see on screen</span>
-      </div>
-    </footer>
+    </div>
   </main>
 
   <script>
     const colors = {
       trueBlue: '#0062e3',
-      moonshot: '#0f1f2c',
       frySauce: '#ff7f64',
-      gold: '#fed141',
-      deepBlue: '#0026ee',
-      sky: '#8fceee',
+      moonshot: '#0f1f2c',
     };
 
     const fmt = (n) => Number.isFinite(n) ? n.toLocaleString() : '0';
-
-    // CSV Data Source Configuration
-    // Option 1: Use local CSV file (current setup)
-    // const csvUrl = encodeURI('Release Metrics - release (summarised).csv');
-    
-    // Option 2: Use Google Sheets (recommended for live updates)
-    // To set up Google Sheets:
-    // 1. Open your Google Sheet and make sure it's shared (View access is enough)
-    // 2. Get your Sheet ID from the URL: https://docs.google.com/spreadsheets/d/SHEET_ID_HERE/edit
-    // 3. Get your Sheet name (tab name at the bottom, e.g., "Sheet1")
-    // 4. Use this format: https://docs.google.com/spreadsheets/d/SHEET_ID/export?format=csv&gid=0
-    //    OR if you know the Sheet name: https://docs.google.com/spreadsheets/d/SHEET_ID/gviz/tq?tqx=out:csv&sheet=SHEET_NAME
-    // 5. Replace the URL below with your Google Sheets CSV export URL
-    // Example: const csvUrl = 'https://docs.google.com/spreadsheets/d/1ABC123XYZ/gviz/tq?tqx=out:csv&sheet=Sheet1';
-    
-    // Using local CSV file. To switch to Google Sheets, see instructions above.
     const csvUrl = encodeURI('Release Metrics - release (summarised).csv');
 
+    const plotLayout = {
+      paper_bgcolor: 'rgba(0,0,0,0)',
+      plot_bgcolor: 'rgba(0,0,0,0)',
+      font: { color: '#0f1f2c', family: 'Inter' },
+      margin: { t: 36, b: 40, l: 48, r: 16 },
+    };
+
+    const compareChartLayout = {
+      ...plotLayout,
+      margin: { t: 12, b: 70, l: 50, r: 10 },
+      yaxis: { gridcolor: '#e2e8f0', color: '#64748b' },
+      xaxis: { color: '#64748b', tickfont: { size: 9 } },
+    };
+
+    const brandStripe = `
+      <div class="dg-stripe">
+        <div style="background:#0062E3"></div>
+        <div style="background:#E9F7FE"></div>
+        <div style="background:#FED141"></div>
+        <div style="background:#FF7F64"></div>
+      </div>`;
+
+    const thumbUpSvg = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M7 22H4C2.9 22 2 21.1 2 20V13H7V22Z" fill="#0062e3"/><path d="M7 11V3C7 2.45 7.45 2 8 2H10C11.1 2 12 2.9 12 4V9.5C12 10.05 12.45 10.5 13 10.5H19.78C20.39 10.5 20.85 11.11 20.69 11.7L17.85 21.19C17.71 21.66 17.27 22 16.78 22H7V11Z" fill="#0062e3"/></svg>`;
+    const thumbDownSvg = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M17 2H20C21.1 2 22 2.9 22 4V11H17V2Z" fill="#ff7f64"/><path d="M17 13V21C17 21.55 16.55 22 16 22H14C12.9 22 12 21.1 12 20V14.5C12 13.95 11.55 13.5 11 13.5H4.22C3.61 13.5 3.15 12.89 3.31 12.3L6.15 2.81C6.29 2.34 6.73 2 7.22 2H17V13Z" fill="#ff7f64"/></svg>`;
+
     async function loadCsv() {
-      // Add cache-busting parameter to ensure we always get the latest CSV
-      const cacheBuster = `?t=${Date.now()}`;
-      const res = await fetch(csvUrl + cacheBuster);
-      if (!res.ok) throw new Error('Could not load CSV. If opening file://, start a local server (see notes below).');
-      const text = await res.text();
-      return parseCsv(text);
+      const res = await fetch(csvUrl + '?t=' + Date.now());
+      if (!res.ok) throw new Error('Could not load CSV.');
+      return parseCsv(await res.text());
     }
 
     function parseCsvLine(line) {
       const result = [];
       let current = '';
       let inQuotes = false;
-      
       for (let i = 0; i < line.length; i++) {
         const char = line[i];
-        const nextChar = line[i + 1];
-        
         if (char === '"') {
-          if (inQuotes && nextChar === '"') {
-            current += '"';
-            i++;
-          } else {
-            inQuotes = !inQuotes;
-          }
+          if (inQuotes && line[i + 1] === '"') { current += '"'; i++; }
+          else inQuotes = !inQuotes;
         } else if (char === ',' && !inQuotes) {
           result.push(current);
           current = '';
-        } else {
-          current += char;
-        }
+        } else current += char;
       }
       result.push(current);
       return result;
     }
 
     function parseCsv(text) {
-      // Parse CSV with proper handling of quoted fields containing newlines
       const lines = [];
       let currentLine = '';
       let inQuotes = false;
-      
       for (let i = 0; i < text.length; i++) {
         const char = text[i];
-        const nextChar = text[i + 1];
-        
         if (char === '"') {
-          if (inQuotes && nextChar === '"') {
-            currentLine += '"';
-            i++; // Skip next quote
-          } else {
-            inQuotes = !inQuotes;
-            currentLine += char;
-          }
+          if (inQuotes && text[i + 1] === '"') { currentLine += '"'; i++; }
+          else { inQuotes = !inQuotes; currentLine += char; }
         } else if (char === '\n' && !inQuotes) {
           lines.push(currentLine);
           currentLine = '';
-        } else {
-          currentLine += char;
-        }
+        } else currentLine += char;
       }
       if (currentLine) lines.push(currentLine);
-      
+
       const headers = parseCsvLine(lines[0]).map(h => h.trim().toLowerCase());
       return lines.slice(1).map(line => {
         if (!line.trim()) return null;
         const cols = parseCsvLine(line);
         const row = {};
-        headers.forEach((h, i) => {
-          const val = cols[i];
-          row[h] = val !== undefined && val !== null ? val.trim() : '';
-        });
-        const get = (key) => {
-          const val = row[key.toLowerCase()];
-          return val !== undefined && val !== null && val !== '' ? val : '';
-        };
-        const toInt = (key, fallback = null) => {
-          const val = get(key);
-          if (val === '') return fallback !== null ? fallback : 0;
-          const v = parseInt(val, 10);
-          return Number.isFinite(v) && !isNaN(v) ? v : (fallback !== null ? fallback : 0);
+        headers.forEach((h, i) => { row[h] = cols[i] !== undefined ? String(cols[i]).trim() : ''; });
+        const get = (key) => row[key.toLowerCase()] || '';
+        const toInt = (key, fb = 0) => {
+          const v = parseInt(get(key), 10);
+          return Number.isFinite(v) && !isNaN(v) ? v : fb;
         };
         const toBool = (key) => String(get(key)).toLowerCase() === 'true';
         const toDateIso = (key) => {
-          const raw = get(key);
-          const parts = raw.split('/');
+          const parts = get(key).split('/');
           if (parts.length === 3) {
             const [m, d, y] = parts;
             return `${y.padStart(4,'0')}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`;
           }
-          return raw;
+          return get(key);
         };
         const releaseName = get('release');
         if (!releaseName) return null;
-        const netNew = toInt('net new bugs created', toInt('bugs opened', 0) - toInt('total bugs solved', 0));
-        const lxpSfVal = toInt('lxp sf associations solved', 0);
-        const acmSfVal = toInt('acm sf associations solved', 0);
-        const sumSf = lxpSfVal + acmSfVal;
-        const totalSfFromColRaw = get('total sf associations solved');
-        let totalSfFromCol = null;
-        if (totalSfFromColRaw !== '') {
-          const parsed = parseInt(totalSfFromColRaw, 10);
-          if (!isNaN(parsed) && parsed >= 0) {
-            totalSfFromCol = parsed;
-          }
-        }
-        // Use column value if available and > 0, otherwise use calculated sum
-        const totalSfSolvedCalc = (totalSfFromCol !== null && totalSfFromCol > 0) ? totalSfFromCol : sumSf;
+        const parseTeams = (raw) => {
+          const teamData = raw.replace(/^"|"$/g, '').trim();
+          if (!teamData) return null;
+          const teams = {};
+          teamData.split(',').forEach(item => {
+            const [name, count] = item.split(':').map(s => s.trim());
+            if (name && count) teams[name] = parseInt(count, 10) || 0;
+          });
+          return Object.keys(teams).length ? teams : null;
+        };
         return {
           release: releaseName,
           date: toDateIso('date'),
           mpr: toBool('mpr'),
           lxpBugs: toInt('lxp bugs solved'),
-          lxpZd: toInt('lxp zd tickets solved'),
-          lxpSf: toInt('lxp sf associations solved'),
           acmBugs: toInt('acm bugs solved'),
-          acmZd: toInt('acm zd tickets solved'),
-          acmSf: toInt('acm sf associations solved'),
           totalBugsSolved: toInt('total bugs solved'),
           totalZdSolved: toInt('total zd tickets solved'),
-          totalSfSolved: totalSfSolvedCalc,
+          totalSfSolved: toInt('total sf associations solved'),
           bugsOpened: toInt('bugs opened'),
           zdOpened: toInt('zd tickets opened'),
           sfOpened: toInt('sf associations opened'),
-          netNew,
+          netNew: toInt('net new bugs created', toInt('bugs opened') - toInt('total bugs solved')),
           p2Within: toInt('p2 within sla'),
           p2Over: toInt('p2 over sla'),
           p3Within: toInt('p3 within sla'),
           p3Over: toInt('p3 over sla'),
           trendSummary: get('trend summary').replace(/^"|"$/g, '').trim(),
-          productTeam: (() => {
-            const teamData = get('product team').replace(/^"|"$/g, '').trim();
-            if (!teamData) return null;
-            const teams = {};
-            teamData.split(',').forEach(item => {
-              const [name, count] = item.split(':').map(s => s.trim());
-              if (name && count) {
-                teams[name] = parseInt(count, 10) || 0;
-              }
-            });
-            return Object.keys(teams).length > 0 ? teams : null;
-          })(),
           hotfixes: toInt('hotfixes'),
-          productTeamHotfixes: (() => {
-            const teamData = get('product teams hotfixes').replace(/^"|"$/g, '').trim();
-            if (!teamData) return null;
-            const teams = {};
-            teamData.split(',').forEach(item => {
-              const [name, count] = item.split(':').map(s => s.trim());
-              if (name && count) {
-                teams[name] = parseInt(count, 10) || 0;
-              }
-            });
-            return Object.keys(teams).length > 0 ? teams : null;
-          })(),
+          productTeam: parseTeams(get('product team')),
+          productTeamHotfixes: parseTeams(get('product teams hotfixes')),
         };
       }).filter(Boolean).sort((a, b) => new Date(a.date) - new Date(b.date));
     }
 
-    function renderApp(releases) {
-      const byRelease = new Map(releases.map(r => [r.release, r]));
+    function netNewLabel(n) {
+      if (n > 0) return '↑ More in than out';
+      if (n < 0) return '↓ Backlog reduced';
+      return 'Even';
+    }
 
-      // Tabs
+    function netNewDisplay(n) {
+      if (n > 0) return '+' + fmt(n);
+      return fmt(n);
+    }
+
+    function formatReleaseHeading(r) {
+      const d = new Date(r.date);
+      const dateLabel = d.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
+      const releaseType = r.mpr ? 'Major' : 'Minor';
+      return `${dateLabel} ${releaseType} Release: ${r.release}`;
+    }
+
+    function escapeHtml(s) {
+      return String(s)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+    }
+
+    function boldFirstSentence(paragraph) {
+      const trimmed = paragraph.trim();
+      if (!trimmed) return '';
+      const match = trimmed.match(/^(.+?[.!?])(\s+|$)/);
+      if (match) {
+        const rest = trimmed.slice(match[1].length);
+        return `<strong>${escapeHtml(match[1])}</strong>${escapeHtml(rest)}`;
+      }
+      return `<strong>${escapeHtml(trimmed)}</strong>`;
+    }
+
+    function renderKpiPanel(r) {
+      const netClass = r.netNew < 0 ? 'blue' : 'salmon';
+      const zdNet = r.zdOpened - r.totalZdSolved;
+      const sfNet = r.sfOpened - r.totalSfSolved;
+      document.getElementById('kpiPanel').innerHTML = `
+        <div class="dg-wrap">
+          <div class="dg-title release-heading">${formatReleaseHeading(r)}</div>
+          <div class="dg-section-label">Bugs — Client-Reported</div>
+          <div class="dg-grid">
+            <div class="dg-card blue">
+              <div class="dg-card-label">Bugs Solved</div>
+              <div class="dg-card-number">${fmt(r.totalBugsSolved)}</div>
+              <span class="dg-pill on-blue">${fmt(r.lxpBugs)} LXP · ${fmt(r.acmBugs)} ACM</span>
+            </div>
+            <div class="dg-card">
+              <div class="dg-card-label">Bugs Opened</div>
+              <div class="dg-card-number">${fmt(r.bugsOpened)}</div>
+              <span class="dg-pill ghost on-grey">–</span>
+            </div>
+            <div class="dg-card ${netClass}">
+              <div class="dg-card-label">Net New Bugs</div>
+              <div class="dg-card-number">${netNewDisplay(r.netNew)}</div>
+              <span class="dg-pill ${netClass === 'blue' ? 'on-blue' : 'on-salmon'}">${netNewLabel(r.netNew)}</span>
+            </div>
+          </div>
+          <div class="dg-section-label">Support Tickets</div>
+          <div class="dg-grid-2">
+            <div class="dg-card blue">
+              <div class="dg-card-label">Tickets Solved</div>
+              <div class="dg-card-number">${fmt(r.totalZdSolved)}</div>
+              <span class="dg-pill ghost on-blue">–</span>
+            </div>
+            <div class="dg-card">
+              <div class="dg-card-label">Tickets Opened</div>
+              <div class="dg-card-number">${fmt(r.zdOpened)}</div>
+              <span class="dg-pill on-grey">${zdNet <= 0 ? '↓ Net ' + fmt(zdNet) : '↑ Net +' + fmt(zdNet)}</span>
+            </div>
+          </div>
+          <div class="dg-section-label">Client Associations</div>
+          <div class="dg-grid-2">
+            <div class="dg-card blue">
+              <div class="dg-card-label">Associations Solved</div>
+              <div class="dg-card-number">${fmt(r.totalSfSolved)}</div>
+              <span class="dg-pill ghost on-blue">–</span>
+            </div>
+            <div class="dg-card">
+              <div class="dg-card-label">Associations Opened</div>
+              <div class="dg-card-number">${fmt(r.sfOpened)}</div>
+              <span class="dg-pill on-grey">${sfNet <= 0 ? '↓ Net ' + fmt(sfNet) : '↑ Net +' + fmt(sfNet)}</span>
+            </div>
+          </div>
+          ${brandStripe}
+        </div>
+      `;
+    }
+
+    function isRedundantTrendLine(line) {
+      const n = line.trim().toLowerCase();
+      if (/^support\s+bug\s+tracker/.test(n)) return true;
+      if (/^support\s*[-–—]\s*bugs?\s+opened/.test(n)) return true;
+      if (/^product teams?\s*[-–—]\s*bugs?\s+opened/.test(n)) return true;
+      if (/^product teams?\s*[-–—]\s*bugs?\s+(fixed|solved)/.test(n)) return true;
+      if (/^total\s+bugs?\s*[:=]/.test(n)) return true;
+      return false;
+    }
+
+    function formatTrendHtml(text) {
+      const paragraphs = (text || 'No trend analysis available for this release.')
+        .replace(/\n{3,}/g, '\n\n')
+        .split(/\n/)
+        .map(line => line.trim())
+        .filter(line => line.length > 0 && !isRedundantTrendLine(line));
+      if (!paragraphs.length) {
+        return '<p>No trend analysis available for this release.</p>';
+      }
+      return paragraphs.map(p => `<p>${boldFirstSentence(p)}</p>`).join('');
+    }
+
+    function renderTrendPanel(r) {
+      const trendHtml = formatTrendHtml(r.trendSummary);
+      document.getElementById('trendPanel').innerHTML = `
+        <div class="trend-wrap">
+          <div class="dg-title">Trend Analysis</div>
+          <div class="trend-body">${trendHtml}</div>
+          ${brandStripe}
+        </div>
+      `;
+    }
+
+    function sortTeams(teams) {
+      let entries = Object.entries(teams);
+      const other = entries.find(([n]) => n.toLowerCase() === 'other');
+      const rest = entries.filter(([n]) => n.toLowerCase() !== 'other').sort((a, b) => b[1] - a[1]);
+      if (other) return [...rest, other];
+      return rest.sort((a, b) => b[1] - a[1]);
+    }
+
+    const colorPalette = [
+      { base: '#0062E3', light1: '#4D9EFF', light2: '#80B8FF', light3: '#B3D2FF' },
+      { base: '#0026EE', light1: '#4D66FF', light2: '#8094FF', light3: '#B3C2FF' },
+      { base: '#8FCEEE', light1: '#B3E0F7', light2: '#D1EDFB', light3: '#E8F6FD' },
+      { base: '#FF7F64', light1: '#FFA68A', light2: '#FFC2B0', light3: '#FFDED6' },
+      { base: '#FED141', light1: '#FFE070', light2: '#FFE99F', light3: '#FFF2CE' },
+    ];
+
+    function teamColors(count) {
+      const usage = new Map();
+      return Array.from({ length: count }, (_, i) => {
+        const p = colorPalette[i % colorPalette.length];
+        const u = usage.get(p.base) || 0;
+        usage.set(p.base, u + 1);
+        if (u === 0) return p.base;
+        if (u === 1) return p.light1;
+        if (u === 2) return p.light2;
+        return p.light3;
+      });
+    }
+
+    function purgePlotly(el) {
+      if (!el) return;
+      try {
+        if (el.querySelector('.plotly-graph-div') || el.classList.contains('js-plotly-plot')) {
+          Plotly.purge(el);
+        }
+      } catch (_) { /* ignore */ }
+    }
+
+    function renderPie(elId, teams, centerLabel) {
+      const el = document.getElementById(elId);
+      if (!el) return;
+      purgePlotly(el);
+      if (!teams || !Object.keys(teams).length) {
+        el.innerHTML = '<div class="pie-empty">No data for this release</div>';
+        return;
+      }
+      el.innerHTML = '';
+      const entries = sortTeams(teams);
+      const names = entries.map(([n]) => n);
+      const values = entries.map(([, v]) => v);
+      const total = values.reduce((a, b) => a + b, 0);
+      const labels = names.map((n, i) => `${n} (${values[i]})`);
+      const layout = {
+        ...plotLayout,
+        showlegend: true,
+        legend: { orientation: 'v', x: 1.02, y: 0.5, font: { size: 10 } },
+        annotations: [{
+          text: `<b>${centerLabel}</b><br>${total}`,
+          x: 0.5, y: 0.5, showarrow: false,
+          font: { size: 13, color: '#0f1f2c' },
+        }],
+      };
+      Plotly.newPlot(el, [{
+        labels,
+        values,
+        type: 'pie',
+        hole: 0.5,
+        marker: { colors: teamColors(values.length), line: { color: '#fff', width: 2 } },
+        text: values.map(String),
+        textinfo: 'text',
+        textposition: 'outside',
+        textfont: { color: '#0f1f2c', size: 11 },
+        hovertemplate: '<b>%{label}</b><br>%{value}<extra></extra>',
+      }], layout, { displayModeBar: false }).then(() => {
+        hidePieConnectors(elId);
+        Plotly.Plots.resize(el);
+      });
+    }
+
+    function hidePieConnectors(id) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.querySelectorAll('path').forEach(path => {
+        const d = path.getAttribute('d') || '';
+        const stroke = path.getAttribute('stroke');
+        const sw = parseFloat(path.getAttribute('stroke-width') || '0');
+        if (stroke && sw > 0 && d.length < 300 && !/[ACQ]/.test(d)) {
+          path.style.display = 'none';
+        }
+      });
+    }
+
+    function setupTabs() {
       const tabButtons = document.querySelectorAll('.tab');
       tabButtons.forEach(btn => {
         btn.addEventListener('click', () => {
           tabButtons.forEach(b => b.classList.remove('active'));
           btn.classList.add('active');
-          document.querySelectorAll('.tab-panel').forEach(panel => panel.style.display = 'none');
+          document.querySelectorAll('.tab-panel').forEach(panel => {
+            panel.style.display = 'none';
+          });
           document.getElementById(btn.dataset.tab).style.display = '';
         });
       });
+    }
 
-      // Select
+    function renderCompare(releases) {
+      const recent = releases.slice(-10);
+      const names = recent.map(r => r.release);
+      const barText = { color: '#0f1f2c', size: 11 };
+
+      Plotly.react('bugsChart', [
+        { name: 'Solved', x: names, y: recent.map(r => r.totalBugsSolved), type: 'bar', marker: { color: colors.trueBlue },
+          text: recent.map(r => r.totalBugsSolved), textposition: 'top', textfont: barText },
+        { name: 'Opened', x: names, y: recent.map(r => r.bugsOpened), type: 'bar', marker: { color: colors.frySauce },
+          text: recent.map(r => r.bugsOpened), textposition: 'top', textfont: barText },
+      ], { ...compareChartLayout, barmode: 'group', legend: { orientation: 'h', y: 1.12, x: 0 }, yaxis: { ...compareChartLayout.yaxis, title: 'Bugs' } }, { displayModeBar: false });
+
+      Plotly.react('ticketsChart', [
+        { name: 'ZD Tickets Solved', x: names, y: recent.map(r => r.totalZdSolved), type: 'bar', marker: { color: colors.trueBlue },
+          text: recent.map(r => r.totalZdSolved), textposition: 'top', textfont: barText },
+        { name: 'ZD Tickets Opened', x: names, y: recent.map(r => r.zdOpened), type: 'bar', marker: { color: colors.frySauce },
+          text: recent.map(r => r.zdOpened), textposition: 'top', textfont: barText },
+      ], { ...compareChartLayout, barmode: 'group', legend: { orientation: 'h', y: 1.12, x: 0 }, yaxis: { ...compareChartLayout.yaxis, title: 'ZD tickets' } }, { displayModeBar: false });
+
+      Plotly.react('openedChart', [{
+        name: 'Net new bugs', x: names, y: recent.map(r => r.netNew), type: 'bar', marker: { color: '#8fceee' },
+        text: recent.map(r => r.netNew), textposition: 'top', textfont: barText,
+      }], { ...compareChartLayout, legend: { orientation: 'h', y: 1.05, x: 0 }, yaxis: { ...compareChartLayout.yaxis, title: 'Net new bugs' } }, { displayModeBar: false });
+
+      Plotly.react('hotfixesChart', [{
+        name: 'Hotfixes', x: names, y: recent.map(r => r.hotfixes), type: 'bar', marker: { color: colors.frySauce },
+        text: recent.map(r => r.hotfixes), textposition: 'top', textfont: barText,
+      }], { ...compareChartLayout, legend: { orientation: 'h', y: 1.05, x: 0 }, yaxis: { ...compareChartLayout.yaxis, title: 'Hotfixes' } }, { displayModeBar: false });
+
+      const minNet = Math.min(...recent.map(r => r.netNew));
+      const maxNet = Math.max(...recent.map(r => r.netNew));
+
+      document.getElementById('compareHighlights').innerHTML = `
+        <span class="compare-pill good">${thumbUpSvg} Lowest net new bugs (${fmt(minNet)})</span>
+        <span class="compare-pill bad">${thumbDownSvg} Highest net new bugs (${fmt(maxNet)})</span>
+      `;
+
+      document.getElementById('compareTable').innerHTML = `
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Release</th><th>Date</th><th>Bugs solved</th><th>Bugs opened</th>
+                <th>ZD solved</th><th>ZD opened</th><th>Net new bugs</th><th>Hotfixes</th>
+                <th>P2 within</th><th>P2 over</th><th>P3 within</th><th>P3 over</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${recent.map(r => {
+                const isBest = r.netNew === minNet;
+                const isWorst = r.netNew === maxNet;
+                const rowCls = isBest ? 'row-best' : isWorst ? 'row-worst' : '';
+                const badge = isBest ? thumbUpSvg : isWorst ? thumbDownSvg : '';
+                return `<tr class="${rowCls}">
+                  <td><span style="display:inline-flex;align-items:center;gap:6px;">${r.release}${r.mpr ? ' · Major' : ''}${badge}</span></td>
+                  <td>${new Date(r.date).toLocaleDateString()}</td>
+                  <td>${fmt(r.totalBugsSolved)}</td>
+                  <td>${fmt(r.bugsOpened)}</td>
+                  <td>${fmt(r.totalZdSolved)}</td>
+                  <td>${fmt(r.zdOpened)}</td>
+                  <td><strong>${fmt(r.netNew)}</strong></td>
+                  <td>${fmt(r.hotfixes)}</td>
+                  <td>${fmt(r.p2Within)}</td>
+                  <td>${fmt(r.p2Over)}</td>
+                  <td>${fmt(r.p3Within)}</td>
+                  <td>${fmt(r.p3Over)}</td>
+                </tr>`;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
+
+    function renderRelease(r) {
+      document.getElementById('mprPill').textContent = r.mpr ? 'Major release' : 'Minor release';
+      document.getElementById('mprPill').className = 'meta-pill' + (r.mpr ? ' major' : '');
+
+      renderKpiPanel(r);
+      renderTrendPanel(r);
+
+      Plotly.react('qualityChart', [
+        { name: 'Within SLA', x: ['P2','P3'], y: [r.p2Within, r.p3Within], type: 'bar', marker: { color: colors.trueBlue },
+          text: [r.p2Within, r.p3Within], textposition: 'top', textfont: { color: '#0f1f2c', size: 11 } },
+        { name: 'Over SLA', x: ['P2','P3'], y: [r.p2Over, r.p3Over], type: 'bar', marker: { color: colors.frySauce },
+          text: [r.p2Over, r.p3Over], textposition: 'top', textfont: { color: '#0f1f2c', size: 11 } },
+      ], { ...plotLayout, barmode: 'group', legend: { orientation: 'h', y: 1.12, x: 0 }, yaxis: { gridcolor: '#e2e8f0' } }, { displayModeBar: false });
+
+      Plotly.react('supportChart', [
+        { name: 'Solved', x: ['Bugs','Support tickets','Client assoc.'], y: [r.totalBugsSolved, r.totalZdSolved, r.totalSfSolved], type: 'bar', marker: { color: colors.trueBlue },
+          text: [r.totalBugsSolved, r.totalZdSolved, r.totalSfSolved], textposition: 'top', textfont: { color: '#0f1f2c', size: 11 } },
+        { name: 'Opened', x: ['Bugs','Support tickets','Client assoc.'], y: [r.bugsOpened, r.zdOpened, r.sfOpened], type: 'bar', marker: { color: colors.frySauce },
+          text: [r.bugsOpened, r.zdOpened, r.sfOpened], textposition: 'top', textfont: { color: '#0f1f2c', size: 11 } },
+      ], { ...plotLayout, barmode: 'group', legend: { orientation: 'h', y: 1.12, x: 0 }, yaxis: { gridcolor: '#e2e8f0' } }, { displayModeBar: false });
+
+      renderPie('productTeamChart', r.productTeam, 'Total Issues');
+      renderPie('productTeamHotfixesChart', r.productTeamHotfixes, 'Total Hotfixes');
+    }
+
+    if (location.protocol === 'file:') {
+      document.querySelector('main').innerHTML = `
+        <div class="panel">
+          <h3>Open via a local server</h3>
+          <p>This page loads data from the CSV next to it. Browsers block that when you double‑click the HTML file.</p>
+          <ol style="margin: 12px 0; padding-left: 20px; line-height: 1.6;">
+            <li>Open Terminal in the <strong>Cursor-dashboard</strong> folder.</li>
+            <li>Run: <code style="background:#f3f4f4;padding:2px 6px;border-radius:4px;">python3 -m http.server 8000</code></li>
+            <li>In your browser go to: <code style="background:#f3f4f4;padding:2px 6px;border-radius:4px;">http://localhost:8000/index.html</code></li>
+          </ol>
+          <p>Keep <code>Release Metrics - release (summarised).csv</code> in the same folder as this file.</p>
+        </div>`;
+      throw new Error('file protocol');
+    }
+
+    loadCsv().then(releases => {
+      setupTabs();
+      const byRelease = new Map(releases.map(r => [r.release, r]));
       const select = document.getElementById('releaseSelect');
       releases.forEach(r => {
         const opt = document.createElement('option');
@@ -430,640 +894,15 @@
         opt.textContent = `${r.release} (${r.date})`;
         select.appendChild(opt);
       });
-
-      const mprPill = document.getElementById('mprPill');
-      const datePill = document.getElementById('datePill');
-      const kpiCards = document.getElementById('kpiCards');
-      const detailTable = document.getElementById('detailTable');
-
-      function renderRelease(id) {
-        const r = byRelease.get(id);
-        if (!r) return;
-        mprPill.textContent = r.mpr ? 'Major product release' : 'Minor release';
-        mprPill.className = 'pill ' + (r.mpr ? 'good' : '');
-        datePill.textContent = new Date(r.date).toLocaleDateString();
-
-        const topCards = [
-          { label: 'Bugs Solved (Client-Reported)', value: r.totalBugsSolved, color: colors.trueBlue, breakdown: `${fmt(r.lxpBugs)} LXP, ${fmt(r.acmBugs)} ACM` },
-          { label: 'Bugs Opened (Client-Reported)', value: r.bugsOpened, color: colors.frySauce },
-          { label: 'Net New Bugs (Client-Reported)', value: r.netNew, color: r.netNew < 0 ? colors.trueBlue : colors.frySauce },
-        ];
-        const bottomCards = [
-          { label: 'Support tickets solved', value: r.totalZdSolved, color: colors.trueBlue },
-          { label: 'Support tickets opened', value: r.zdOpened, color: colors.frySauce },
-          { label: 'Client associations solved', value: r.totalSfSolved, color: colors.trueBlue },
-          { label: 'Client associations opened', value: r.sfOpened, color: colors.frySauce },
-        ];
-        kpiCards.innerHTML = `
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; margin-bottom: 12px;">
-            ${topCards.map(c => `
-              <div class="card" style="border-color: rgba(255,255,255,0.04);">
-                <h3>${c.label}</h3>
-                <div class="big-number" style="color:${c.color}; font-size: 36px;">${fmt(c.value)}</div>
-                ${c.breakdown ? `<div class="muted" style="margin-top: 4px; font-size: 12px;">${c.breakdown}</div>` : ''}
-              </div>
-            `).join('')}
-          </div>
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px;">
-            ${bottomCards.map(c => `
-              <div class="card" style="border-color: rgba(255,255,255,0.04);">
-                <h3 style="font-size: 13px;">${c.label}</h3>
-                <div class="big-number" style="color:${c.color}; font-size: 24px;">${fmt(c.value)}</div>
-              </div>
-            `).join('')}
-          </div>
-        `;
-
-        const trendText = r.trendSummary || 'No trend analysis available for this release.';
-        // Format trend text: preserve existing paragraph breaks and add spacing between statements
-        const formattedTrendText = trendText
-          .replace(/\n{3,}/g, '\n\n') // Normalize multiple newlines to double newlines
-          .split(/\n/)
-          .map(line => line.trim())
-          .filter(line => line.length > 0)
-          .join('\n\n'); // Add double line breaks between statements for better readability
-        
-        detailTable.innerHTML = `
-          <div class="detail-table-wrapper" style="display: grid; grid-template-columns: calc(50% - 10px) calc(50% - 10px); gap: 20px; align-items: stretch; width: 100%;">
-            <div class="card" style="display: flex; flex-direction: column; width: 100%; min-width: 0;">
-              <h3 style="margin-top: 0;">Trend Analysis</h3>
-              <div style="color: #e2e8f0; line-height: 1.8; font-size: 13px; white-space: pre-wrap; margin-top: 8px; flex: 1;">${formattedTrendText}</div>
-            </div>
-            <div class="card" style="display: flex; flex-direction: column; width: 100%; min-width: 0;">
-              ${r.productTeam ? `
-                <div>
-                  <h3 style="margin-top: 0; margin-bottom: 8px;">Product Team Breakdown Bugs Opened</h3>
-                  <div id="productTeamChart" class="chart" style="height: 300px;"></div>
-                </div>
-              ` : ''}
-              ${r.productTeamHotfixes && Object.keys(r.productTeamHotfixes).length > 0 ? `
-                <div style="margin-top: ${r.productTeam ? '16px' : '0'};">
-                  <h3 style="margin-top: ${r.productTeam ? '12px' : '0'}; margin-bottom: 8px;">Product Teams Hotfixes</h3>
-                  <div id="productTeamHotfixesChart" class="chart" style="height: 300px;"></div>
-                </div>
-              ` : ''}
-            </div>
-          </div>
-        `;
-
-        Plotly.react('qualityChart', [
-          { 
-            name: 'Within SLA', 
-            x: ['P2','P3'], 
-            y: [r.p2Within, r.p3Within], 
-            type: 'bar', 
-            marker: { color: colors.trueBlue },
-            text: [r.p2Within, r.p3Within],
-            textposition: 'top',
-            textfont: { color: 'white', size: 12 }
-          },
-          { 
-            name: 'Over SLA', 
-            x: ['P2','P3'], 
-            y: [r.p2Over, r.p3Over], 
-            type: 'bar', 
-            marker: { color: colors.frySauce },
-            text: [r.p2Over, r.p3Over],
-            textposition: 'top',
-            textfont: { color: 'black', size: 12 }
-          }
-        ], { barmode:'group', margin: { t: 12, b: 40, l: 40, r: 10 }, legend:{orientation:'h',x:0,y:1.05}, paper_bgcolor:'rgba(0,0,0,0)', plot_bgcolor:'rgba(0,0,0,0)', font:{color:'#e2e8f0'}, yaxis:{gridcolor:'#1f2937'} }, {displayModeBar:false});
-
-        Plotly.react('supportChart', [
-          { 
-            name: 'Solved', 
-            x: ['Bugs','Support tickets','Client assoc.'], 
-            y: [r.totalBugsSolved, r.totalZdSolved, r.totalSfSolved], 
-            type: 'bar', 
-            marker:{color: colors.trueBlue},
-            text: [r.totalBugsSolved, r.totalZdSolved, r.totalSfSolved],
-            textposition: 'top',
-            textfont: { color: 'white', size: 12 }
-          },
-          { 
-            name: 'Opened', 
-            x: ['Bugs','Support tickets','Client assoc.'], 
-            y: [r.bugsOpened, r.zdOpened, r.sfOpened], 
-            type: 'bar', 
-            marker:{color: colors.frySauce},
-            text: [r.bugsOpened, r.zdOpened, r.sfOpened],
-            textposition: 'top',
-            textfont: { color: 'black', size: 12 }
-          },
-        ], { barmode:'group', margin:{t:12,b:40,l:40,r:10}, legend:{orientation:'h',x:0,y:1.05}, paper_bgcolor:'rgba(0,0,0,0)', plot_bgcolor:'rgba(0,0,0,0)', font:{color:'#e2e8f0'}, yaxis:{gridcolor:'#1f2937'} }, {displayModeBar:false});
-
-        // Product Team pie chart (only if data exists)
-        if (r.productTeam) {
-          // Helper function to lighten a hex color (percent is 0-1, where 1 = fully white)
-          const lightenColor = (hex, percent) => {
-            // Normalize hex color - ensure uppercase and # prefix
-            let cleanHex = String(hex).trim().toUpperCase();
-            if (!cleanHex.startsWith('#')) {
-              cleanHex = '#' + cleanHex;
-            }
-            const hexValue = cleanHex.replace('#', '');
-            if (hexValue.length !== 6) {
-              return hex; // Return original if invalid
-            }
-            const num = parseInt(hexValue, 16);
-            if (isNaN(num)) {
-              return hex; // Return original if invalid
-            }
-            const r = (num >> 16) & 0xFF;
-            const g = (num >> 8) & 0xFF;
-            const b = num & 0xFF;
-            // Blend with white - ensure values don't exceed 255
-            const newR = Math.min(255, Math.round(r + (255 - r) * percent));
-            const newG = Math.min(255, Math.round(g + (255 - g) * percent));
-            const newB = Math.min(255, Math.round(b + (255 - b) * percent));
-            const result = '#' + ((newR << 16) | (newG << 8) | newB).toString(16).padStart(6, '0').toUpperCase();
-            return result;
-          };
-          
-          // Convert teams to array and sort: "Other" ALWAYS at bottom
-          let teamEntries = Object.entries(r.productTeam);
-          const hasOther = teamEntries.some(([name]) => name.toLowerCase() === 'other');
-          
-          if (hasOther) {
-            // Separate "Other" and sort the rest
-            const otherEntry = teamEntries.find(([name]) => name.toLowerCase() === 'other');
-            const otherEntries = teamEntries.filter(([name]) => name.toLowerCase() !== 'other');
-            // Sort by value descending (excluding Other)
-            otherEntries.sort((a, b) => b[1] - a[1]);
-            teamEntries = [...otherEntries, otherEntry];
-          } else {
-            // Sort by value descending
-            teamEntries.sort((a, b) => b[1] - a[1]);
-          }
-          
-          const teamNames = teamEntries.map(([name]) => name);
-          const teamValues = teamEntries.map(([, value]) => value);
-          const totalIssues = teamValues.reduce((sum, val) => sum + val, 0);
-          
-          // Use brand colors, making them lighter on reuse
-          // Define base colors and their lighter variants
-          const colorPalette = [
-            { base: colors.trueBlue.toUpperCase(), light1: '#4D9EFF', light2: '#80B8FF', light3: '#B3D2FF' },
-            { base: colors.deepBlue.toUpperCase(), light1: '#4D66FF', light2: '#8094FF', light3: '#B3C2FF' },
-            { base: colors.sky.toUpperCase(), light1: '#B3E0F7', light2: '#D1EDFB', light3: '#E8F6FD' },
-            { base: colors.frySauce.toUpperCase(), light1: '#FFA68A', light2: '#FFC2B0', light3: '#FFDED6' },
-            { base: colors.gold.toUpperCase(), light1: '#FFE070', light2: '#FFE99F', light3: '#FFF2CE' },
-            { base: '#8FCEEE', light1: '#B3E0F7', light2: '#D1EDFB', light3: '#E8F6FD' },
-            { base: '#0026EE', light1: '#4D66FF', light2: '#8094FF', light3: '#B3C2FF' },
-            { base: '#FED141', light1: '#FFE070', light2: '#FFE99F', light3: '#FFF2CE' },
-            { base: '#FF7F64', light1: '#FFA68A', light2: '#FFC2B0', light3: '#FFDED6' },
-            { base: '#0062E3', light1: '#4D9EFF', light2: '#80B8FF', light3: '#B3D2FF' }
-          ];
-          const colorUsageMap = new Map(); // Track usage: key = baseColor string, value = count
-          
-          const teamColors = teamNames.map((_, i) => {
-            const paletteIndex = i % colorPalette.length;
-            const palette = colorPalette[paletteIndex];
-            const baseColor = palette.base;
-            const usageCount = colorUsageMap.get(baseColor) || 0;
-            colorUsageMap.set(baseColor, usageCount + 1);
-            
-            // Return lighter variant based on usage count
-            if (usageCount === 0) {
-              return baseColor;
-            } else if (usageCount === 1) {
-              return palette.light1;
-            } else if (usageCount === 2) {
-              return palette.light2;
-            } else {
-              return palette.light3;
-            }
-          });
-          
-          // Create text for slices (just numbers) and labels for legend (name + number)
-          const sliceText = teamValues.map(val => val.toString());
-          const legendLabels = teamNames.map((name, i) => `${name} (${teamValues[i]})`);
-          
-          // Ensure data is in correct order (Other at end)
-          // Create arrays maintaining exact order
-          const finalLabels = [...legendLabels];
-          const finalValues = [...teamValues];
-          const finalColors = [...teamColors];
-          
-          Plotly.react('productTeamChart', [{
-            labels: finalLabels,
-            values: finalValues,
-            type: 'pie',
-            hole: 0.5,
-            direction: 'clockwise',
-            rotation: 0,
-            marker: {
-              colors: finalColors,
-              line: { color: '#0f1f2c', width: 2 }
-            },
-            text: sliceText,
-            textinfo: 'text',
-            textposition: 'outside',
-            textfont: { color: '#e2e8f0', size: 11 },
-            hovertemplate: '<b>%{label}</b><br>Issues: %{value}<br>Percentage: %{percent}<extra></extra>'
-          }], {
-            margin: { t: 30, b: 20, l: 20, r: 20 },
-            paper_bgcolor: 'rgba(0,0,0,0)',
-            plot_bgcolor: 'rgba(0,0,0,0)',
-            font: { color: '#e2e8f0' },
-            automargin: false,
-            showlegend: true,
-            legend: {
-              orientation: 'v',
-              x: 1.05,
-              y: 0.5,
-              font: { color: '#e2e8f0', size: 11 },
-              traceorder: 'normal',
-              itemorder: 'normal'
-            },
-            annotations: [{
-              text: `<b>Total Issues</b><br>${totalIssues}`,
-              x: 0.5,
-              y: 0.5,
-              font: { size: 14, color: '#e2e8f0' },
-              showarrow: false
-            }]
-          }, {displayModeBar:false});
-          
-          // Hide connector lines after chart renders
-          setTimeout(() => {
-            const chartEl = document.getElementById('productTeamChart');
-            if (chartEl) {
-              const svg = chartEl.querySelector('svg');
-              if (svg) {
-                // Find and hide paths that are connector lines
-                // Connector lines are typically short straight paths with stroke
-                const paths = svg.querySelectorAll('path');
-                paths.forEach(path => {
-                  const d = path.getAttribute('d') || '';
-                  const stroke = path.getAttribute('stroke');
-                  const strokeWidth = parseFloat(path.getAttribute('stroke-width') || '0');
-                  // Connector lines: have stroke, are relatively short, and don't contain arc commands
-                  if (stroke && strokeWidth > 0 && d.length < 300 && !d.includes('A') && !d.includes('C') && !d.includes('Q')) {
-                    path.style.display = 'none';
-                    path.style.visibility = 'hidden';
-                  }
-                });
-              }
-            }
-          }, 200);
-        }
-
-        // Product Teams Hotfixes pie chart (only if data exists)
-        if (r.productTeamHotfixes && Object.keys(r.productTeamHotfixes).length > 0) {
-          // Helper function to lighten a hex color (percent is 0-1, where 1 = fully white)
-          const lightenColor = (hex, percent) => {
-            // Normalize hex color - ensure uppercase and # prefix
-            let cleanHex = String(hex).trim().toUpperCase();
-            if (!cleanHex.startsWith('#')) {
-              cleanHex = '#' + cleanHex;
-            }
-            const hexValue = cleanHex.replace('#', '');
-            if (hexValue.length !== 6) {
-              return hex; // Return original if invalid
-            }
-            const num = parseInt(hexValue, 16);
-            if (isNaN(num)) {
-              return hex; // Return original if invalid
-            }
-            const r = (num >> 16) & 0xFF;
-            const g = (num >> 8) & 0xFF;
-            const b = num & 0xFF;
-            // Blend with white - ensure values don't exceed 255
-            const newR = Math.min(255, Math.round(r + (255 - r) * percent));
-            const newG = Math.min(255, Math.round(g + (255 - g) * percent));
-            const newB = Math.min(255, Math.round(b + (255 - b) * percent));
-            const result = '#' + ((newR << 16) | (newG << 8) | newB).toString(16).padStart(6, '0').toUpperCase();
-            return result;
-          };
-          
-          // Convert teams to array and sort: "Other" ALWAYS at bottom
-          let teamEntries = Object.entries(r.productTeamHotfixes);
-          const hasOther = teamEntries.some(([name]) => name.toLowerCase() === 'other');
-          
-          if (hasOther) {
-            // Separate "Other" and sort the rest
-            const otherEntry = teamEntries.find(([name]) => name.toLowerCase() === 'other');
-            const otherEntries = teamEntries.filter(([name]) => name.toLowerCase() !== 'other');
-            // Sort by value descending (excluding Other)
-            otherEntries.sort((a, b) => b[1] - a[1]);
-            teamEntries = [...otherEntries, otherEntry];
-          } else {
-            // Sort by value descending
-            teamEntries.sort((a, b) => b[1] - a[1]);
-          }
-          
-          const teamNames = teamEntries.map(([name]) => name);
-          const teamValues = teamEntries.map(([, value]) => value);
-          const totalIssues = teamValues.reduce((sum, val) => sum + val, 0);
-          
-          // Use brand colors, making them lighter on reuse
-          // Define base colors and their lighter variants
-          const colorPalette = [
-            { base: colors.trueBlue.toUpperCase(), light1: '#4D9EFF', light2: '#80B8FF', light3: '#B3D2FF' },
-            { base: colors.deepBlue.toUpperCase(), light1: '#4D66FF', light2: '#8094FF', light3: '#B3C2FF' },
-            { base: colors.sky.toUpperCase(), light1: '#B3E0F7', light2: '#D1EDFB', light3: '#E8F6FD' },
-            { base: colors.frySauce.toUpperCase(), light1: '#FFA68A', light2: '#FFC2B0', light3: '#FFDED6' },
-            { base: colors.gold.toUpperCase(), light1: '#FFE070', light2: '#FFE99F', light3: '#FFF2CE' },
-            { base: '#8FCEEE', light1: '#B3E0F7', light2: '#D1EDFB', light3: '#E8F6FD' },
-            { base: '#0026EE', light1: '#4D66FF', light2: '#8094FF', light3: '#B3C2FF' },
-            { base: '#FED141', light1: '#FFE070', light2: '#FFE99F', light3: '#FFF2CE' },
-            { base: '#FF7F64', light1: '#FFA68A', light2: '#FFC2B0', light3: '#FFDED6' },
-            { base: '#0062E3', light1: '#4D9EFF', light2: '#80B8FF', light3: '#B3D2FF' }
-          ];
-          const colorUsageMap = new Map(); // Track usage: key = baseColor string, value = count
-          
-          const teamColors = teamNames.map((_, i) => {
-            const paletteIndex = i % colorPalette.length;
-            const palette = colorPalette[paletteIndex];
-            const baseColor = palette.base;
-            const usageCount = colorUsageMap.get(baseColor) || 0;
-            colorUsageMap.set(baseColor, usageCount + 1);
-            
-            // Return lighter variant based on usage count
-            if (usageCount === 0) {
-              return baseColor;
-            } else if (usageCount === 1) {
-              return palette.light1;
-            } else if (usageCount === 2) {
-              return palette.light2;
-            } else {
-              return palette.light3;
-            }
-          });
-          
-          // Create text for slices (just numbers) and labels for legend (name + number)
-          const sliceText = teamValues.map(val => val.toString());
-          const legendLabels = teamNames.map((name, i) => `${name} (${teamValues[i]})`);
-          
-          // Ensure data is in correct order (Other at end)
-          // Create arrays maintaining exact order
-          const finalLabels = [...legendLabels];
-          const finalValues = [...teamValues];
-          const finalColors = [...teamColors];
-          
-          // Wait for DOM to be ready before rendering
-          setTimeout(() => {
-            const chartEl = document.getElementById('productTeamHotfixesChart');
-            if (!chartEl) {
-              console.warn('Product Teams Hotfixes chart element not found');
-              return;
-            }
-            
-            if (finalValues.length === 0 || finalLabels.length === 0) {
-              console.warn('Product Teams Hotfixes: No data to display');
-              return;
-            }
-            
-            Plotly.newPlot('productTeamHotfixesChart', [{
-            labels: finalLabels,
-            values: finalValues,
-            type: 'pie',
-            hole: 0.5,
-            direction: 'clockwise',
-            rotation: 0,
-            marker: {
-              colors: finalColors,
-              line: { color: '#0f1f2c', width: 2 }
-            },
-            text: sliceText,
-            textinfo: 'text',
-            textposition: 'outside',
-            textfont: { color: '#e2e8f0', size: 11 },
-            hovertemplate: '<b>%{label}</b><br>Hotfixes: %{value}<br>Percentage: %{percent}<extra></extra>'
-          }], {
-            margin: { t: 30, b: 20, l: 20, r: 20 },
-            paper_bgcolor: 'rgba(0,0,0,0)',
-            plot_bgcolor: 'rgba(0,0,0,0)',
-            font: { color: '#e2e8f0' },
-            automargin: false,
-            showlegend: true,
-            legend: {
-              orientation: 'v',
-              x: 1.05,
-              y: 0.5,
-              font: { color: '#e2e8f0', size: 11 },
-              traceorder: 'normal',
-              itemorder: 'normal'
-            },
-            annotations: [{
-              text: `<b>Total Hotfixes</b><br>${totalIssues}`,
-              x: 0.5,
-              y: 0.5,
-              font: { size: 14, color: '#e2e8f0' },
-              showarrow: false
-            }]
-          }, {displayModeBar:false});
-          
-            // Hide connector lines after chart renders
-            setTimeout(() => {
-              const chartEl = document.getElementById('productTeamHotfixesChart');
-              if (chartEl) {
-                const svg = chartEl.querySelector('svg');
-                if (svg) {
-                  // Find and hide paths that are connector lines
-                  // Connector lines are typically short straight paths with stroke
-                  const paths = svg.querySelectorAll('path');
-                  paths.forEach(path => {
-                    const d = path.getAttribute('d') || '';
-                    const stroke = path.getAttribute('stroke');
-                    const strokeWidth = parseFloat(path.getAttribute('stroke-width') || '0');
-                    // Connector lines: have stroke, are relatively short, and don't contain arc commands
-                    if (stroke && strokeWidth > 0 && d.length < 300 && !d.includes('A') && !d.includes('C') && !d.includes('Q')) {
-                      path.style.display = 'none';
-                      path.style.visibility = 'hidden';
-                    }
-                  });
-                }
-              }
-            }, 250);
-          }, 100);
-        }
-      }
-
-      select.addEventListener('change', e => renderRelease(e.target.value));
-      renderRelease(releases[releases.length - 1].release);
-      select.value = releases[releases.length - 1].release;
-
-      // Comparative charts (oldest -> newest)
-      const recent = [...releases].slice(-10);
-      const names = recent.map(r => r.release);
-
-      Plotly.newPlot('bugsChart', [
-        { 
-          name:'Solved', 
-          x: names, 
-          y: recent.map(r => r.totalBugsSolved), 
-          type: 'bar', 
-          marker:{color: colors.trueBlue},
-          text: recent.map(r => r.totalBugsSolved),
-          textposition: 'top',
-          textfont: { color: 'white', size: 11 }
-        },
-        { 
-          name:'Opened', 
-          x: names, 
-          y: recent.map(r => r.bugsOpened), 
-          type: 'bar', 
-          marker:{color: colors.frySauce},
-          text: recent.map(r => r.bugsOpened),
-          textposition: 'top',
-          textfont: { color: 'black', size: 11 }
-        },
-      ], { barmode:'group', margin:{t:12,b:70,l:50,r:10}, legend:{orientation:'h',x:0,y:1.12}, paper_bgcolor:'rgba(0,0,0,0)', plot_bgcolor:'rgba(0,0,0,0)', font:{color:'#e2e8f0'}, yaxis:{title:'Bugs', gridcolor:'#1f2937'} }, {displayModeBar:false});
-
-      Plotly.newPlot('ticketsChart', [
-        { 
-          name:'ZD Tickets Solved', 
-          x:names, 
-          y: recent.map(r => r.totalZdSolved), 
-          type:'bar', 
-          marker:{color: colors.trueBlue},
-          text: recent.map(r => r.totalZdSolved),
-          textposition: 'top',
-          textfont: { color: 'white', size: 11 }
-        },
-        { 
-          name:'ZD Tickets Opened', 
-          x:names, 
-          y: recent.map(r => r.zdOpened), 
-          type:'bar', 
-          marker:{color: colors.frySauce},
-          text: recent.map(r => r.zdOpened),
-          textposition: 'top',
-          textfont: { color: 'black', size: 11 }
-        },
-      ], { barmode:'group', margin:{t:12,b:70,l:50,r:10}, legend:{orientation:'h',x:0,y:1.12}, paper_bgcolor:'rgba(0,0,0,0)', plot_bgcolor:'rgba(0,0,0,0)', font:{color:'#e2e8f0'}, yaxis:{title:'ZD tickets', gridcolor:'#1f2937'} }, {displayModeBar:false});
-
-      Plotly.newPlot('openedChart', [
-        { 
-          name:'Net new bugs', 
-          x:names, 
-          y: recent.map(r => r.netNew), 
-          type:'bar', 
-          marker:{color: colors.sky},
-          text: recent.map(r => r.netNew),
-          textposition: 'top',
-          textfont: { color: '#0f1f2c', size: 12 }
-        },
-      ], { margin:{t:12,b:70,l:50,r:10}, legend:{orientation:'h',x:0,y:1.05}, paper_bgcolor:'rgba(0,0,0,0)', plot_bgcolor:'rgba(0,0,0,0)', font:{color:'#e2e8f0'}, yaxis:{title:'Net new bugs', gridcolor:'#1f2937'} }, {displayModeBar:false});
-
-      Plotly.newPlot('hotfixesChart', [
-        { 
-          name:'Hotfixes', 
-          x:names, 
-          y: recent.map(r => r.hotfixes), 
-          type:'bar', 
-          marker:{color: colors.frySauce},
-          text: recent.map(r => r.hotfixes),
-          textposition: 'top',
-          textfont: { color: '#0f1f2c', size: 12 }
-        },
-      ], { margin:{t:12,b:70,l:50,r:10}, legend:{orientation:'h',x:0,y:1.05}, paper_bgcolor:'rgba(0,0,0,0)', plot_bgcolor:'rgba(0,0,0,0)', font:{color:'#e2e8f0'}, yaxis:{title:'Hotfixes', gridcolor:'#1f2937'} }, {displayModeBar:false});
-
-      const minNet = Math.min(...recent.map(r => r.netNew));
-      const maxNet = Math.max(...recent.map(r => r.netNew));
-
-      const compareTable = document.getElementById('compareTable');
-      const bestRelease = recent.find(r => r.netNew === minNet);
-      const worstRelease = recent.find(r => r.netNew === maxNet);
-      compareTable.innerHTML = `
-        <div style="margin-bottom: 12px; display: flex; gap: 16px; flex-wrap: wrap; align-items: center;">
-          <span class="pill" style="background: rgba(0,98,227,0.15); border-color: rgba(0,98,227,0.45); color: #b4d2ff;">
-            <span style="font-weight: 600; display: inline-flex; align-items: center; gap: 4px;">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: inline-block; vertical-align: middle;">
-                <path d="M7 22H4C2.9 22 2 21.1 2 20V13H7V22Z" fill="#0062e3"/>
-                <path d="M7 11V3C7 2.45 7.45 2 8 2H10C11.1 2 12 2.9 12 4V9.5C12 10.05 12.45 10.5 13 10.5H19.78C20.39 10.5 20.85 11.11 20.69 11.7L17.85 21.19C17.71 21.66 17.27 22 16.78 22H7V11Z" fill="#0062e3"/>
-              </svg>
-              Lowest:
-            </span> Net new bugs (${fmt(minNet)})
-          </span>
-          <span class="pill" style="background: rgba(255,127,100,0.15); border-color: rgba(255,127,100,0.45); color: #ffd5cb;">
-            <span style="font-weight: 600; display: inline-flex; align-items: center; gap: 4px;">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: inline-block; vertical-align: middle;">
-                <path d="M17 2H20C21.1 2 22 2.9 22 4V11H17V2Z" fill="#ff7f64"/>
-                <path d="M17 13V21C17 21.55 16.55 22 16 22H14C12.9 22 12 21.1 12 20V14.5C12 13.95 11.55 13.5 11 13.5H4.22C3.61 13.5 3.15 12.89 3.31 12.3L6.15 2.81C6.29 2.34 6.73 2 7.22 2H17V13Z" fill="#ff7f64"/>
-              </svg>
-              Highest:
-            </span> Net new bugs (${fmt(maxNet)})
-          </span>
-        </div>
-        <div class="table-wrapper">
-        <table>
-          <thead>
-            <tr>
-              <th>Release</th><th>Date</th><th>Bugs solved</th><th>Bugs opened</th><th>ZD tickets solved</th><th>ZD tickets opened</th><th>Net new bugs</th><th>Hotfixes</th><th>P2 within</th><th>P2 over</th><th>P3 within</th><th>P3 over</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${recent.map(r => {
-              const isBest = r.netNew === minNet;
-              const isWorst = r.netNew === maxNet;
-              const cls = isBest ? 'style="background: rgba(0,98,227,0.15); border-left: 3px solid #0062e3;"' : isWorst ? 'style="background: rgba(255,127,100,0.15); border-left: 3px solid #ff7f64;"' : '';
-              const badge = isBest ? '<span class="pill" style="background: rgba(0,98,227,0.25); border-color: rgba(0,98,227,0.6); padding: 2px 6px; margin-left: 6px; display: inline-flex; align-items: center;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7 22H4C2.9 22 2 21.1 2 20V13H7V22Z" fill="#0062e3"/><path d="M7 11V3C7 2.45 7.45 2 8 2H10C11.1 2 12 2.9 12 4V9.5C12 10.05 12.45 10.5 13 10.5H19.78C20.39 10.5 20.85 11.11 20.69 11.7L17.85 21.19C17.71 21.66 17.27 22 16.78 22H7V11Z" fill="#0062e3"/></svg></span>' : 
-                           isWorst ? '<span class="pill" style="background: rgba(255,127,100,0.25); border-color: rgba(255,127,100,0.6); padding: 2px 6px; margin-left: 6px; display: inline-flex; align-items: center;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M17 2H20C21.1 2 22 2.9 22 4V11H17V2Z" fill="#ff7f64"/><path d="M17 13V21C17 21.55 16.55 22 16 22H14C12.9 22 12 21.1 12 20V14.5C12 13.95 11.55 13.5 11 13.5H4.22C3.61 13.5 3.15 12.89 3.31 12.3L6.15 2.81C6.29 2.34 6.73 2 7.22 2H17V13Z" fill="#ff7f64"/></svg></span>' : '';
-              return `
-              <tr ${cls}>
-                <td><span style="display: inline-flex; align-items: center;">${r.release}${r.mpr ? ' • Major' : ''}${badge}</span></td>
-                <td>${new Date(r.date).toLocaleDateString()}</td>
-                <td>${fmt(r.totalBugsSolved)}</td>
-                <td>${fmt(r.bugsOpened)}</td>
-                <td>${fmt(r.totalZdSolved)}</td>
-                <td>${fmt(r.zdOpened)}</td>
-                <td><strong>${fmt(r.netNew)}</strong></td>
-                <td>${fmt(r.hotfixes)}</td>
-                <td>${fmt(r.p2Within)}</td>
-                <td>${fmt(r.p2Over)}</td>
-                <td>${fmt(r.p3Within)}</td>
-                <td>${fmt(r.p3Over)}</td>
-              </tr>
-            `;}).join('')}
-          </tbody>
-        </table>
-        </div>
-      `;
-
-      // Export buttons
-      const exportPng = document.getElementById('exportPng');
-      const exportPdf = document.getElementById('exportPdf');
-      if (exportPng && exportPdf) {
-        const capture = async () => {
-          const main = document.querySelector('main');
-          return html2canvas(main, { backgroundColor: '#0f1f2c', scale: 2 });
-        };
-        exportPng.addEventListener('click', async () => {
-          const canvas = await capture();
-          const link = document.createElement('a');
-          link.download = 'release-metrics.png';
-          link.href = canvas.toDataURL('image/png');
-          link.click();
-        });
-        exportPdf.addEventListener('click', async () => {
-          const canvas = await capture();
-          const imgData = canvas.toDataURL('image/png');
-          const pdf = new window.jspdf.jsPDF({ orientation: 'landscape', unit: 'px', format: [canvas.width, canvas.height] });
-          pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
-          pdf.save('release-metrics.pdf');
-        });
-      }
-    }
-
-    loadCsv()
-      .then(renderApp)
-      .then(() => {
-        window.addEventListener('resize', () => {
-          ['bugsChart','ticketsChart','openedChart','hotfixesChart'].forEach(id => {
-            const el = document.getElementById(id);
-            if (el) Plotly.Plots.resize(el);
-          });
-        });
-      })
-      .catch(err => {
-        const main = document.querySelector('main');
-        main.innerHTML = `<div class="card"><h3>Data load error</h3><p>${err.message}</p><p class="muted">If you opened this file directly (file://), start a local server: <code>python3 -m http.server</code> and open <code>http://localhost:8000/index.html</code>.</p></div>`;
-        console.error(err);
-      });
+      const latest = releases[releases.length - 1].release;
+      select.value = latest;
+      renderRelease(byRelease.get(latest));
+      select.addEventListener('change', e => renderRelease(byRelease.get(e.target.value)));
+      renderCompare(releases);
+    }).catch(err => {
+      if (err.message === 'file protocol') return;
+      document.querySelector('main').innerHTML = `<div class="panel"><h3>Data load error</h3><p>${err.message}</p><p>From the <strong>Cursor-dashboard</strong> folder run <code>python3 -m http.server 8000</code>, then open <code>http://localhost:8000/index.html</code>.</p></div>`;
+    });
   </script>
 </body>
 </html>
-
