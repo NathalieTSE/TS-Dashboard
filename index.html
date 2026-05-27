@@ -171,6 +171,8 @@
       border-radius: 16px;
       border: 0.5px solid var(--border);
       height: 100%;
+      display: flex;
+      flex-direction: column;
     }
     .dg-title {
       font-size: 12px;
@@ -250,14 +252,15 @@
       height: 4px;
       border-radius: 2px;
       overflow: hidden;
-      margin-top: 1rem;
+      margin-top: auto;
+      flex-shrink: 0;
       gap: 3px;
     }
     .dg-stripe div { flex: 1; border-radius: 2px; }
     /* Trend panel — same visual language */
     .trend-wrap {
       background: #fff;
-      padding: 1.5rem 1.25rem;
+      padding: 1.5rem 1.25rem 1.25rem;
       border-radius: 16px;
       border: 0.5px solid var(--border);
       height: 100%;
@@ -265,7 +268,6 @@
       flex-direction: column;
     }
     .trend-wrap .dg-title { margin-bottom: 1rem; }
-    .trend-wrap .dg-stripe { margin-top: auto; flex-shrink: 0; }
     .trend-body {
       flex: 1;
       font-size: 12px;
@@ -284,6 +286,16 @@
       gap: 16px;
       align-items: stretch;
       margin-bottom: 16px;
+    }
+    .hero-row > #kpiPanel,
+    .hero-row > #trendPanel {
+      display: flex;
+      min-height: 0;
+    }
+    .hero-row > #kpiPanel > .dg-wrap,
+    .hero-row > #trendPanel > .trend-wrap {
+      flex: 1;
+      width: 100%;
     }
     .panel {
       background: #fff;
